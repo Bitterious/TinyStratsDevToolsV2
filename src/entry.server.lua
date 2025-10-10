@@ -53,17 +53,21 @@ task.spawn(function()
     end
 end)
 
-DropdownHandler.createDropdown(gui.MainContainer.UploadUI.Default.AssetType, {
+local UploadAssetTypeHandler = DropdownHandler.createDropdown(gui.MainContainer.UploadUI.Default.AssetType, {
     Map = "game/map",
     Model = "asset/model",
     Mod = "asset/mod",
     Animation = "asset/animation",
 })
-DropdownHandler.createDropdown(gui.MainContainer.UploadUI.Default.Privacy, {
+UploadAssetTypeHandler.toggle_item("Mod", false)
+UploadAssetTypeHandler.toggle_item("Animation", false)
+UploadAssetTypeHandler.select_item("Map")
+local UploadPrivacyHandler = DropdownHandler.createDropdown(gui.MainContainer.UploadUI.Default.Privacy, {
     Public = "public",
     Unlisted = "unlisted",
     Private = "private",
 })
+UploadPrivacyHandler.select_item("Public")
 
 gui.Buttons.Upload.MouseButton1Click:Connect(function()
     gui.MainContainer.UploadUI.Visible = not gui.MainContainer.UploadUI.Visible
@@ -98,7 +102,7 @@ end
 
 --#region Authentication
 
-local STORED_API_KEY = nil -- = plugin:GetSetting("api_key") :: string? COMMENTED OUT TO TEST LOGIN SCREEN
+local STORED_API_KEY = plugin:GetSetting("api_key") :: string?
 if STORED_API_KEY then
     local success = NetHttp.Login(STORED_API_KEY)
     if success then
