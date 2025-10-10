@@ -95,7 +95,6 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
             end
         end,
         select_item = function(name: string)
-            if disabledItems[name] then return end
             currentValue = items[name]
             dropdownItem.Text = name
         end,

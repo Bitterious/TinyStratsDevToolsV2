@@ -43,6 +43,7 @@ PopupTool.createPopup = function(title: string, message: string)
     WindowHandler.createWindow(popup)
     popup.Visible = true
     popup.Parent = gui
+    return popup
 end
 FlipbookAnimator.animate(gui.Login.Busy.ImageLabel, 16, 0.03, 4)
 gui.Login.Busy.Visible = false
@@ -58,9 +59,15 @@ end)
 local UploadAssetTypeHandler = DropdownHandler.createDropdown(gui.MainContainer.UploadUI.Default.AssetType, {
     Map = "game/map",
     Model = "asset/model",
-    Mod = "asset/mod",
+    Mod = "package/mod",
     Animation = "asset/animation",
 })
+local AssetTypeValueReverse = {
+    ["game/map"] = "Map",
+    ["asset/model"] = "Model",
+    ["package/mod"] = "Mod",
+    ["asset/animation"] = "Animation",
+}
 UploadAssetTypeHandler.toggle_item("Mod", false)
 UploadAssetTypeHandler.toggle_item("Animation", false)
 UploadAssetTypeHandler.select_item("Map")
@@ -69,9 +76,16 @@ local UploadPrivacyHandler = DropdownHandler.createDropdown(gui.MainContainer.Up
     Unlisted = "unlisted",
     Private = "private",
 })
+local PrivacyValueReverse = {
+    ["public"] = "Public",
+    ["unlisted"] = "Unlisted",
+    ["private"] = "Private",
+}
 UploadPrivacyHandler.select_item("Public")
 
 gui.Login.Welcomer.Text = `Hello, {Players:GetNameFromUserIdAsync(NetHttp.UserId)}!\nPlease enter your API Key to continue:`
+local ExplorerContent = gui.MainContainer.Explorer.Container.Template
+ExplorerContent.Parent = nil
 
 local CoreGui = game:GetService("CoreGui")
 gui.Parent = CoreGui
@@ -90,6 +104,202 @@ end
 
 --#endregion
 
+--#region Upload Logic
+
+local Selection = game:GetService("Selection")
+local jsonModel = require(script.Parent.utils.jsonModel)
+local jsonAnim = require(script.Parent.utils.jsonAnim)
+local deflate = require(script.Parent.utils.deflate)
+local UploadIsBusy = false
+local UploadData = nil
+local UploadMenuMode: "upload" | "update" = "upload"
+
+local function reset_upload_menu_default()
+    local default = gui.MainContainer.UploadUI.Default
+    default.ItemName.Text = ""
+    default.ItemDescription.Text = ""
+    default.IconId.Text = "10925696693"
+    default.RawData.Text = ""
+end
+
+gui.MainContainer.UploadUI.Default.IconId:GetPropertyChangedSignal("Text"):Connect(function()
+    local iconid = gui.MainContainer.UploadUI.Default.IconId.Text
+    local rbxassetid = "rbxassetid://"..iconid
+    gui.MainContainer.UploadUI.Default.Icon.Image = rbxassetid
+end)
+
+gui.Buttons.Upload.MouseButton1Click:Connect(function()
+    if UploadIsBusy then return end
+    if not gui.MainContainer.UploadUI.Visible then
+        UploadIsBusy = true
+        WindowHandler.setButtonEnabled(gui.Buttons.Upload, false)
+        local process_success, process_result = pcall(function()
+            local selections = Selection:Get()
+            if #selections > 1 then
+                PopupTool.createPopup("ERROR", "Please only select one object.")
+                return
+            elseif #selections == 0 then
+                PopupTool.createPopup("ERROR", "Please select an object to upload.")
+                return
+            end
+            local selected = selections[1]
+            UploadAssetTypeHandler.toggle_item("Mod", false)
+            UploadAssetTypeHandler.toggle_item("Animation", false)
+            UploadAssetTypeHandler.toggle_item("Model", false)
+            UploadAssetTypeHandler.toggle_item("Map", false)
+            UploadPrivacyHandler.select_item("Public")
+            if selected.ClassName == "Model" or selected.ClassName == "Folder" then
+                UploadAssetTypeHandler.toggle_item("Model", true)
+                UploadAssetTypeHandler.toggle_item("Map", true)
+                UploadAssetTypeHandler.select_item("Map")
+                local latestJSM = jsonModel.get_latest_version()
+                local success, result = pcall(function()
+                    local jsonData, err = latestJSM.to_json(selected)
+                    if err ~= nil then
+                        PopupTool.createPopup("JSON ERROR", "Failed to convert object to JSON: " .. tostring(err))
+                        return
+                    end
+                    local compressed = deflate.Zlib.Compress(jsonData, {
+                        level = 9,
+                    })
+                    return compressed
+                end)
+                if not success then
+                    PopupTool.createPopup("ENCODING ERROR", `Failed to prepare object for upload: {result}`)
+                    return
+                end
+                return result
+            elseif selected.ClassName == "KeyframeSequence" then
+                UploadAssetTypeHandler.toggle_item("Animation", true)
+                UploadAssetTypeHandler.select_item("Animation")
+                local latestJSA = jsonAnim.get_latest_version()
+                local success, result = pcall(function()
+                    local jsonData, err = latestJSA.sequence_to_json(selected)
+                    if err ~= nil then
+                        PopupTool.createPopup("JSON ERROR", "Failed to convert sequence to JSON: " .. tostring(err))
+                        return
+                    end
+                    local compressed = deflate.Zlib.Compress(jsonData, {
+                        level = 9,
+                    })
+                    return compressed
+                end)
+                if not success then
+                    PopupTool.createPopup("ENCODING ERROR", `Failed to prepare sequence for upload: {result}`)
+                    return
+                end
+                return result
+            elseif selected.ClassName == "StringValue" and selected:HasTag("tsmodfs") then
+                UploadAssetTypeHandler.toggle_item("Mod", true)
+                UploadAssetTypeHandler.select_item("Mod")
+                local fsRaw = selected.Value::string
+                local success, result = pcall(function()
+                    local compressed = deflate.Zlib.Compress(fsRaw, {
+                        level = 9,
+                    })
+                    return compressed
+                end)
+                if not success then
+                    PopupTool.createPopup("COMPRESSION ERROR", `Failed to prepare mod for upload: {result}`)
+                    return
+                end
+                return result
+            else
+                PopupTool.createPopup("ERROR", "Unknown object type: "..selected.ClassName)
+                return
+            end
+        end)
+        WindowHandler.setButtonEnabled(gui.Buttons.Upload, true)
+        UploadIsBusy = false
+        if not process_success then
+            PopupTool.createPopup("ERROR", `Failed to process data: {process_result}`)
+            return
+        end
+        if not process_result then return end
+        UploadData = process_result
+        reset_upload_menu_default()
+        gui.MainContainer.UploadUI.Position = UDim2.fromScale(.5, .5)
+		gui.Buttons.Upload.BackgroundColor3 = Color3.new(1,1,1)
+		gui.Buttons.Upload.ImageColor3 = Color3.fromRGB(32,32,32)
+    else
+		gui.Buttons.Upload.BackgroundColor3 = Color3.fromRGB(32,32,32)
+		gui.Buttons.Upload.ImageColor3 = Color3.new(1,1,1)
+    end
+    gui.MainContainer.UploadUI.Visible = not gui.MainContainer.UploadUI.Visible
+end)
+
+--#endregion
+
+--#region Explorer Window
+
+local function TableToTextData(t)
+    local s = ""
+    for k, v in t do
+        s ..= `[{k}]: {v}\n`
+    end
+    return s
+end
+
+local ExplorerContentItems = {}
+local function load_explorer_content()
+    for _, x in ExplorerContentItems do x:Destroy() end
+    local assets = NetHttp.GetAssets()
+    if #assets == 0 then
+        --TODO: Add 'Create New Content' dialog
+    end
+    for i, asset in ipairs(assets) do
+        local ContentItem = ExplorerContent:Clone()
+        ContentItem.Parent = gui.MainContainer.Explorer.Container
+        ContentItem.Name = `entry_{i}`
+        ContentItem.ContentName.Text = asset.name
+        ContentItem.ContentDescription.Text = if asset.description == "" then "<No Description>" else asset.description
+        ContentItem.ContentIcon.Image = asset.icon
+        ContentItem.LayoutOrder = i
+        ContentItem.CopyId.MouseButton1Click:Connect(function()
+            local popup = PopupTool.createPopup("COPY ID", "Asset id for\n"..asset.name)
+            local textbox = gui.Login.ApiKey:Clone()
+            textbox.Parent = popup
+            textbox.TextEditable = false
+            textbox.Text = tostring(asset.id)
+            popup.Welcomer.TextYAlignment = Enum.TextYAlignment.Top
+        end)
+        ContentItem.Edit.MouseButton1Click:Connect(function()
+            reset_upload_menu_default()
+            UploadAssetTypeHandler.toggle_item("Mod", false)
+            UploadAssetTypeHandler.toggle_item("Animation", false)
+            UploadAssetTypeHandler.toggle_item("Model", false)
+            UploadAssetTypeHandler.toggle_item("Map", false)
+            UploadAssetTypeHandler.select_item(AssetTypeValueReverse[asset.content_type or "game/map"])
+            UploadPrivacyHandler.select_item(PrivacyValueReverse[asset.visibility or "public"])
+            gui.MainContainer.UploadUI.Default.ItemName.Text = asset.name
+            gui.MainContainer.UploadUI.Default.ItemDescription.Text = asset.description
+            local icon_raw = string.match(asset.icon, "rbxassetid://([0-9]+)")
+            gui.MainContainer.UploadUI.Default.IconId.Text = icon_raw or ""
+            gui.MainContainer.UploadUI.Default.RawData.Text = TableToTextData(asset)
+            UploadMenuMode = "update"
+            gui.MainContainer.UploadUI.Position = UDim2.fromScale(.5, .5)
+            gui.Buttons.Upload.BackgroundColor3 = Color3.new(1,1,1)
+            gui.Buttons.Upload.ImageColor3 = Color3.fromRGB(32,32,32)
+            gui.MainContainer.UploadUI.Visible = true
+        end)
+        table.insert(ExplorerContentItems, ContentItem)
+    end
+end
+local ReloadBusy = false
+gui.MainContainer.Explorer.Refresh.MouseButton1Click:Connect(function()
+    if ReloadBusy then return end
+    ReloadBusy = true
+    WindowHandler.setButtonEnabled(gui.MainContainer.Explorer.Refresh, false)
+    pcall(function()
+        for _, x in ExplorerContentItems do x:Destroy() end
+        load_explorer_content()
+    end)
+    ReloadBusy = false
+    WindowHandler.setButtonEnabled(gui.MainContainer.Explorer.Refresh, true)
+end)
+
+--#endregion
+
 --#region Authentication
 
 local STORED_API_KEY = plugin:GetSetting("api_key") :: string?
@@ -98,6 +308,7 @@ if STORED_API_KEY then
     if success then
         API_KEY = STORED_API_KEY
         gui.MenuToggle.Visible = true
+        load_explorer_content()
     else
         plugin:SetSetting("api_key", nil)
         gui.Login.Visible = true
@@ -135,6 +346,7 @@ gui.Login.TextButton.MouseButton1Click:Connect(function()
     LoginButtonBusy = false
     WindowHandler.setButtonEnabled(gui.Login.TextButton, TOSAccepted)
     update_version_text()
+    load_explorer_content()
 end)
 
 gui.Buttons.Logout.MouseButton1Click:Connect(function()
@@ -150,118 +362,6 @@ gui.Buttons.Logout.MouseButton1Click:Connect(function()
     gui.Buttons.Size = UDim2.fromOffset(0, 64)
     gui.MainContainer.Visible = false
     update_version_text()
-end)
-
---#endregion
-
---#region Upload Logic
-
-local Selection = game:GetService("Selection")
-local jsonModel = require(script.Parent.utils.jsonModel)
-local jsonAnim = require(script.Parent.utils.jsonAnim)
-local deflate = require(script.Parent.utils.deflate)
-local UploadIsBusy = false
-local UploadData = nil
-
-gui.Buttons.Upload.MouseButton1Click:Connect(function()
-    if UploadIsBusy then return end
-    if not gui.MainContainer.UploadUI.Visible then
-        UploadIsBusy = true
-        WindowHandler.setButtonEnabled(gui.Buttons.Upload, false)
-        local process_success, process_result = pcall(function()
-            local selections = Selection:Get()
-            if #selections > 1 then
-                PopupTool.createPopup("ERROR", "Please only select one object.")
-                return
-            elseif #selections == 0 then
-                PopupTool.createPopup("ERROR", "Please select an object to upload.")
-                return
-            end
-            local selected = selections[1]
-            UploadAssetTypeHandler.toggle_item("Mod", false)
-            UploadAssetTypeHandler.toggle_item("Animation", false)
-            UploadAssetTypeHandler.toggle_item("Model", false)
-            UploadAssetTypeHandler.toggle_item("Map", false)
-            if selected.ClassName == "Model" or selected.ClassName == "Folder" then
-                UploadAssetTypeHandler.toggle_item("Model", true)
-                UploadAssetTypeHandler.toggle_item("Map", true)
-                UploadAssetTypeHandler.select_item("Map")
-                UploadPrivacyHandler.select_item("Public")
-                local latestJSM = jsonModel.get_latest_version()
-                local success, result = pcall(function()
-                    local jsonData, err = latestJSM.to_json(selected)
-                    if err ~= nil then
-                        PopupTool.createPopup("JSON ERROR", "Failed to convert object to JSON: " .. tostring(err))
-                        return
-                    end
-                    local compressed = deflate.Zlib.Compress(jsonData, {
-                        level = 9,
-                    })
-                    return compressed
-                end)
-                if not success then
-                    PopupTool.createPopup("ENCODING ERROR", `Failed to prepare object for upload: {result}`)
-                    return
-                end
-                return result
-            elseif selected.ClassName == "KeyframeSequence" then
-                UploadAssetTypeHandler.toggle_item("Animation", true)
-                UploadAssetTypeHandler.select_item("Animation")
-                UploadPrivacyHandler.select_item("Public")
-                local latestJSA = jsonAnim.get_latest_version()
-                local success, result = pcall(function()
-                    local jsonData, err = latestJSA.sequence_to_json(selected)
-                    if err ~= nil then
-                        PopupTool.createPopup("JSON ERROR", "Failed to convert sequence to JSON: " .. tostring(err))
-                        return
-                    end
-                    local compressed = deflate.Zlib.Compress(jsonData, {
-                        level = 9,
-                    })
-                    return compressed
-                end)
-                if not success then
-                    PopupTool.createPopup("ENCODING ERROR", `Failed to prepare sequence for upload: {result}`)
-                    return
-                end
-                return result
-            elseif selected.ClassName == "StringValue" and selected:HasTag("tsmodfs") then
-                UploadAssetTypeHandler.toggle_item("Mod", true)
-                UploadAssetTypeHandler.select_item("Mod")
-                UploadPrivacyHandler.select_item("Public")
-                local fsRaw = selected.Value::string
-                local success, result = pcall(function()
-                    local compressed = deflate.Zlib.Compress(fsRaw, {
-                        level = 9,
-                    })
-                    return compressed
-                end)
-                if not success then
-                    PopupTool.createPopup("COMPRESSION ERROR", `Failed to prepare mod for upload: {result}`)
-                    return
-                end
-                return result
-            else
-                PopupTool.createPopup("ERROR", "Unknown object type: "..selected.ClassName)
-                return
-            end
-        end)
-        WindowHandler.setButtonEnabled(gui.Buttons.Upload, true)
-        UploadIsBusy = false
-        if not process_success then
-            PopupTool.createPopup("ERROR", `Failed to process data: {process_result}`)
-            return
-        end
-        if not process_result then return end
-        UploadData = process_result
-        gui.MainContainer.UploadUI.Position = UDim2.fromScale(.5, .5)
-		gui.Buttons.Upload.BackgroundColor3 = Color3.new(1,1,1)
-		gui.Buttons.Upload.ImageColor3 = Color3.fromRGB(32,32,32)
-    else
-		gui.Buttons.Upload.BackgroundColor3 = Color3.fromRGB(32,32,32)
-		gui.Buttons.Upload.ImageColor3 = Color3.new(1,1,1)
-    end
-    gui.MainContainer.UploadUI.Visible = not gui.MainContainer.UploadUI.Visible
 end)
 
 --#endregion

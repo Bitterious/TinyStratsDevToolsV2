@@ -44,7 +44,22 @@ function mod.Login(api_key: string)
 end
 
 function mod.GetAssets()
-    
+    local success, assetsdata = pcall(function()
+        local request = HttpService:RequestAsync({
+            Url = mod.Endpoint.."/standaloneapi/get_assets",
+            Method = "GET",
+            Headers = {
+                ["Authorization"] = ApiKeyCached,
+                ["User-ID"] = tostring(UserId),
+            }
+        })
+        return HttpService:JSONDecode(request.Body)
+    end)
+    if not success then
+        PopupTool.createPopup("API Error", "Failed to fetch assets: " .. tostring(assetsdata))
+        return {}
+    end
+    return assetsdata
 end
 
 return mod
