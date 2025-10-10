@@ -8,6 +8,7 @@ assert(RunService:IsStudio(), "This script should only run on Studio as a plugin
 if RunService:IsRunning() then return end
 _G.__OCELOT_LOADED__ = true
 local PLUGIN_IS_VALID = true
+local API_KEY = nil
 
 local VERSION = "v2"
 local BUILD = 20251010
@@ -81,7 +82,7 @@ end)
 
 local function update_version_text()
     local loggedintext = "Not logged in"
-    if State.GLOBAL_API_KEY then
+    if API_KEY then
         loggedintext = `Logged in as {Players:GetNameFromUserIdAsync(NetHttp.UserId)}`
     end
     gui.VersionNumber.Text = `Tiny Strats DevTools - Version {VERSION} (Build Number {BUILD}) - OcelotGUI Version 2.0 - {loggedintext}`
@@ -95,6 +96,7 @@ local STORED_API_KEY = plugin:GetSetting("api_key") :: string?
 if STORED_API_KEY then
     local success = NetHttp.Login(STORED_API_KEY)
     if success then
+        API_KEY = STORED_API_KEY
         gui.MenuToggle.Visible = true
     else
         plugin:SetSetting("api_key", nil)
@@ -128,6 +130,7 @@ gui.Login.TextButton.MouseButton1Click:Connect(function()
         gui.Login.Visible = false
         gui.MenuToggle.Visible = true
     end
+    API_KEY = api_key
     gui.Login.Busy.Visible = false
     LoginButtonBusy = false
     WindowHandler.setButtonEnabled(gui.Login.TextButton, TOSAccepted)
@@ -135,7 +138,7 @@ gui.Login.TextButton.MouseButton1Click:Connect(function()
 end)
 
 gui.Buttons.Logout.MouseButton1Click:Connect(function()
-    State.GLOBAL_API_KEY = nil
+    API_KEY = nil
     plugin:SetSetting("api_key", nil)
     gui.Login.ApiKey.Text = ""
     TOSAccepted = false

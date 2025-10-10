@@ -7,7 +7,6 @@ local StudioService = game:GetService("StudioService")
 
 local HashLib = require(script.Parent.HashLib)
 local PopupTool = require(script.Parent.popupTool)
-local State = require(script.Parent.globalState)
 
 local UserId = StudioService:GetUserId()
 if not UserId or UserId <= 0 then
@@ -15,6 +14,7 @@ if not UserId or UserId <= 0 then
     error("This Studio session is not logged in")
 end
 mod.UserId = UserId
+local ApiKeyCached = nil
 
 function mod.Login(api_key: string)
     local uidhash = HashLib.sha256(tostring(UserId))::string
@@ -39,9 +39,12 @@ function mod.Login(api_key: string)
     if ownerhash ~= uidhash then
         PopupTool.createPopup("Login Error", "Invalid API key or user ID does not match the key owner")
         return false
-    end
-    State.GLOBAL_API_KEY = api_key
+    else ApiKeyCached = api_key end
     return ownerhash == uidhash
+end
+
+function mod.GetAssets()
+    
 end
 
 return mod
