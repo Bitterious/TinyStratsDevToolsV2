@@ -53,6 +53,9 @@ function mod.GetAssets()
                 ["User-ID"] = tostring(UserId),
             }
         })
+        if request.StatusCode ~= 200 then
+            error(request.Body)
+        end
         return HttpService:JSONDecode(request.Body)
     end)
     if not success then
@@ -60,6 +63,28 @@ function mod.GetAssets()
         return {}
     end
     return assetsdata
+end
+
+function mod.GetSource(id: number)
+    local success, assetblob = pcall(function()
+        return HttpService:RequestAsync({
+            Url = mod.Endpoint.."/standaloneapi/get_asset_data?content_id=" .. id,
+            Method = "GET",
+            Headers = {
+                ["Authorization"] = ApiKeyCached,
+                ["User-ID"] = tostring(UserId),
+            }
+        })
+    end)
+    if not success then
+        PopupTool.createPopup("Load Error", "Failed to load asset data: " .. tostring(assetblob))
+        return nil, assetblob
+    end
+    if assetblob.StatusCode ~= 200 then
+        PopupTool.createPopup("Load Error", "Failed to load asset data: " .. tostring(assetblob.Body))
+        return nil, assetblob.Body
+    end
+    return assetblob.Body, nil
 end
 
 return mod

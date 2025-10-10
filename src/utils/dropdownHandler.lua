@@ -1,4 +1,5 @@
 local mod = {}
+local TSSignal = require(script.Parent.signalLibrary)
 
 function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
     local dropdownImage = textButton:FindFirstChildWhichIsA("ImageLabel")
@@ -36,6 +37,7 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
     local id = 1
     local disabledItems = {}
     local buttons = {}
+    local changesignal, changefire = TSSignal()
     for name, value in items do
         local itemButton = Instance.new("TextButton")
         itemButton.Text = name
@@ -55,6 +57,7 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
             expanded = false
             dropdownImage.Rotation = 0
             dropdownFrame:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+            changefire(value)
         end)
         buttons[name] = itemButton
         id += 1
@@ -101,6 +104,7 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
         get_current_value = function()
             return currentValue
         end,
+        changed = changesignal,
     }
 end
 

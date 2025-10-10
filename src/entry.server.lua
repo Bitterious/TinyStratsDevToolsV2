@@ -11,7 +11,7 @@ local PLUGIN_IS_VALID = true
 local API_KEY = nil
 
 local VERSION = "v2"
-local BUILD = 20251010
+local BUILD = 20251010 --YYMMDD
 
 local gui = script.Parent.OcelotGuiRev2
 
@@ -82,6 +82,13 @@ local PrivacyValueReverse = {
     ["private"] = "Private",
 }
 UploadPrivacyHandler.select_item("Public")
+local ExplorerTypeHandler = DropdownHandler.createDropdown(gui.MainContainer.Explorer.TypeDropdown, {
+    Map = "game/map",
+    Model = "asset/model",
+    Mod = "package/mod",
+    Animation = "asset/animation",
+})
+ExplorerTypeHandler.select_item("Map")
 
 gui.Login.Welcomer.Text = `Hello, {Players:GetNameFromUserIdAsync(NetHttp.UserId)}!\nPlease enter your API Key to continue:`
 local ExplorerContent = gui.MainContainer.Explorer.Container.Template
@@ -217,6 +224,7 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
         end
         if not process_result then return end
         UploadData = process_result
+        UploadMenuMode = "upload"
         reset_upload_menu_default()
         gui.MainContainer.UploadUI.Position = UDim2.fromScale(.5, .5)
 		gui.Buttons.Upload.BackgroundColor3 = Color3.new(1,1,1)
@@ -232,6 +240,7 @@ end)
 
 --#region Explorer Window
 
+local ChangeHistoryService = game:GetService("ChangeHistoryService")
 local function TableToTextData(t)
     local s = ""
     for k, v in t do
@@ -243,7 +252,14 @@ end
 local ExplorerContentItems = {}
 local function load_explorer_content()
     for _, x in ExplorerContentItems do x:Destroy() end
+    local current_content_type = ExplorerTypeHandler.get_current_value()
     local assets = NetHttp.GetAssets()
+    for i = #assets, 1, -1 do
+        local asset = assets[i]
+        if (asset.content_type or "game/map") ~= current_content_type then
+            table.remove(assets, i)
+        end
+    end
     if #assets == 0 then
         --TODO: Add 'Create New Content' dialog
     end
@@ -282,6 +298,62 @@ local function load_explorer_content()
             gui.Buttons.Upload.ImageColor3 = Color3.fromRGB(32,32,32)
             gui.MainContainer.UploadUI.Visible = true
         end)
+        ContentItem.Load.MouseButton1Click:Connect(function()
+            local data, err = NetHttp.GetSource(asset.id)
+            if err then return end
+            local content_type = asset.content_type or "game/map"
+            if content_type == "game/map" or content_type == "asset/model" then
+                if not jsonModel.has_version(asset.resource_version) then
+                    PopupTool.createPopup("LOAD ERROR", `JSM{asset.resource_version} not found. Try updating the plugin.`)
+                    return
+                end
+                local JSMVersion  = jsonModel.get_version(asset.resource_version)
+                if asset.resource_version ~= jsonModel.get_latest_version_id() then
+                    PopupTool.createPopup("WARNING", `This map uses an outdated decoder version.\nA reupload is recommended.`)
+                end
+                if not asset.compressed then -- .compressed is only set when the compression is server sided
+                    data = deflate.Zlib.Decompress(data)
+                end
+                local model: Folder, jserr = JSMVersion.from_json(data)
+                if jserr then
+                    PopupTool.createPopup("LOAD ERROR", `Failed to load JSON into a model: {jserr}`)
+                    return
+                end
+                model.Name = `[{asset.id}] {asset.name}`
+                model.Parent = workspace
+                ChangeHistoryService:SetWaypoint("TSDEVTOOL_IMPORT_JSM_"..asset.id)
+            elseif content_type == "package/mod" then
+                -- no need to check for asset.compressed since it has been deprecated by the time this comes out
+                local decompressed = deflate.Zlib.Decompress(data)
+                local stringval = Instance.new("StringValue")
+                stringval.Name = `[{asset.id}] {asset.name}`
+                stringval.Value = decompressed
+                stringval:AddTag("tsmodfs")
+                stringval.Parent = workspace
+                ChangeHistoryService:SetWaypoint("TSDEVTOOL_IMPORT_MOD_"..asset.id)
+            elseif content_type == "asset/animation" then
+                if not jsonAnim.has_version(asset.resource_version) then
+                    PopupTool.createPopup("LOAD ERROR", `JSA{asset.resource_version} not found. Try updating the plugin.`)
+                    return
+                end
+                local JSAVersion  = jsonAnim.get_version(asset.resource_version)
+                if asset.resource_version ~= jsonAnim.get_latest_version_id() then
+                    PopupTool.createPopup("WARNING", `This sequence uses an outdated decoder version.\nA reupload is recommended.`)
+                end
+                data = deflate.Zlib.Decompress(data)
+                local sequence: KeyframeSequence, jserr = JSAVersion.json_to_sequence(data)
+                if jserr then
+                    PopupTool.createPopup("LOAD ERROR", `Failed to load JSON into a sequence: {jserr}`)
+                    return
+                end
+                sequence.Name = `[{asset.id}] {asset.name}`
+                sequence.Parent = workspace
+                ChangeHistoryService:SetWaypoint("TSDEVTOOL_IMPORT_JSA_"..asset.id)
+            else
+                PopupTool.createPopup("ERROR", "Unknown content type: "..content_type)
+                return
+            end
+        end)
         table.insert(ExplorerContentItems, ContentItem)
     end
 end
@@ -296,6 +368,9 @@ gui.MainContainer.Explorer.Refresh.MouseButton1Click:Connect(function()
     end)
     ReloadBusy = false
     WindowHandler.setButtonEnabled(gui.MainContainer.Explorer.Refresh, true)
+end)
+ExplorerTypeHandler.changed:Connect(function(_)
+    load_explorer_content()
 end)
 
 --#endregion
@@ -370,3 +445,4 @@ plugin.Unloading:Connect(function()
     PLUGIN_IS_VALID = false
     gui:Destroy()
 end)
+ChangeHistoryService:ResetWaypoints()
