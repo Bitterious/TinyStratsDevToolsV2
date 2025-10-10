@@ -26,10 +26,12 @@ function mod.createWindow(frame: GuiObject)
     end)
 end
 
-function mod.setButtonEnabled(button: TextButton, enabled: boolean)
+function mod.setButtonEnabled(button: GuiButton, enabled: boolean)
     button.Active = enabled
     button.AutoButtonColor = enabled
-    button.TextColor3 = if enabled then Color3.new(1, 1, 1) else Color3.new(0.5, 0.5, 0.5)
+    if button:IsA("TextButton") then button.TextColor3 = if enabled then Color3.new(1, 1, 1) else Color3.new(0.5, 0.5, 0.5)
+    elseif button:IsA("ImageButton") then button.ImageColor3 = if enabled then Color3.new(1, 1, 1) else Color3.new(0.5, 0.5, 0.5)
+    end
     button.BackgroundColor3 = if enabled then Color3.fromRGB(32,32,32) else Color3.fromRGB(45,45,45)
 end
 
