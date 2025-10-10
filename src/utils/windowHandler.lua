@@ -2,6 +2,7 @@ local mod = {}
 local userInputService = game:GetService("UserInputService")
 
 local draggingWindow = nil
+local zIndexCounter = 1000
 function mod.createWindow(frame: GuiObject)
     local title = frame:FindFirstChild("Title")::GuiObject
     if not title then
@@ -17,6 +18,8 @@ function mod.createWindow(frame: GuiObject)
                 end
             end
             draggingWindow = frame
+            zIndexCounter += 1
+            frame.ZIndex = zIndexCounter
         end
     end)
     title.InputEnded:Connect(function(input)
