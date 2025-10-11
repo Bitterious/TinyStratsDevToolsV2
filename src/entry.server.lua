@@ -32,19 +32,6 @@ local button = buttontb:CreateButton("Tiny Strats DevTools V2", "Open the Tiny S
 WindowHandler.createWindow(gui.Login)
 WindowHandler.createWindow(gui.MainContainer.UploadUI)
 WindowHandler.createWindow(gui.MainContainer.Explorer)
-PopupTool.createPopup = function(title: string, message: string)
-    local popup = gui.Popup:Clone()
-    popup.ZIndex = 10
-    popup.Title.Text = `[ {title:upper()} ]`
-    popup.Welcomer.Text = message
-    popup.TextButton.MouseButton1Click:Connect(function()
-        popup:Destroy()
-    end)
-    WindowHandler.createWindow(popup)
-    popup.Visible = true
-    popup.Parent = gui
-    return popup
-end
 FlipbookAnimator.animate(gui.Login.Busy.ImageLabel, 16, 0.03, 4)
 gui.Login.Busy.Visible = false
 gui.MenuToggle.Visible = false
@@ -140,6 +127,7 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
     if not gui.MainContainer.UploadUI.Visible then
         UploadIsBusy = true
         WindowHandler.setButtonEnabled(gui.Buttons.Upload, false)
+        local _, delete_popup = PopupTool.createStatePopup("Compiling asset...")
         local process_success, process_result = pcall(function()
             local selections = Selection:Get()
             if #selections > 1 then
@@ -218,6 +206,7 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
         end)
         WindowHandler.setButtonEnabled(gui.Buttons.Upload, true)
         UploadIsBusy = false
+        delete_popup()
         if not process_success then
             PopupTool.createPopup("ERROR", `Failed to process data: {process_result}`)
             return
@@ -251,6 +240,7 @@ end
 
 local ExplorerContentItems = {}
 local function load_explorer_content()
+    local _, delete_popup = PopupTool.createStatePopup("Loading owned assets...")
     for _, x in ExplorerContentItems do x:Destroy() end
     local current_content_type = ExplorerTypeHandler.get_current_value()
     local assets = NetHttp.GetAssets()
@@ -356,6 +346,7 @@ local function load_explorer_content()
         end)
         table.insert(ExplorerContentItems, ContentItem)
     end
+    delete_popup()
 end
 local ReloadBusy = false
 gui.MainContainer.Explorer.Refresh.MouseButton1Click:Connect(function()
