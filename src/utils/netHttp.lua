@@ -125,4 +125,24 @@ function mod.UploadAsset(data)
     return true
 end
 
+function mod.UpdateAsset(id: number, data)
+    local success, response = pcall(function()
+        return HttpService:RequestAsync({
+            Url = mod.Endpoint.."/standaloneapi/update_asset",
+            Method = "POST",
+            Headers = {
+                ["Authorization"] = ApiKeyCached,
+                ["User-ID"] = tostring(UserId),
+                ["Target-ID"] = id,
+            },
+            Body = HttpService:JSONEncode(data),
+        })
+    end)
+    if not success or response.StatusCode ~= 200 then
+        PopupTool.createPopup("Upload Error", "Failed to update asset: " .. tostring(if success then response.Body else response))
+        return nil
+    end
+    return true
+end
+
 return mod

@@ -122,6 +122,7 @@ local function reset_upload_menu_default()
     default.ItemDescription.Text = ""
     default.IconId.Text = "10925696693"
     default.RawData.Text = ""
+    default.OverwriteMenu.Visible = true
     default.Visible = true
     gui.MainContainer.UploadUI.Title.Text = "[ UPLOAD ]"
     gui.MainContainer.UploadUI.Overwrite.Visible = false
@@ -315,6 +316,8 @@ end)
 gui.MainContainer.UploadUI.Default.Upload.MouseButton1Click:Connect(function()
     if UploadIsBusy then return end
     gui.MainContainer.UploadUI.Visible = false
+    gui.Buttons.Upload.BackgroundColor3 = Color3.fromRGB(32,32,32)
+    gui.Buttons.Upload.ImageColor3 = Color3.new(1,1,1)
     UploadIsBusy = true
     WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, false)
     local _, delete_popup = PopupTool.createStatePopup("Uploading asset...")
@@ -352,6 +355,49 @@ gui.MainContainer.UploadUI.Default.Upload.MouseButton1Click:Connect(function()
     if not success then
         PopupTool.createPopup("ERROR", `Failed to upload data: {result}`)
     end
+    UploadIsBusy = false
+    WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, true)
+    delete_popup()
+end)
+
+gui.MainContainer.UploadUI.Overwrite.Upload.MouseButton1Click:Connect(function()
+    if UploadIsBusy then return end
+    gui.MainContainer.UploadUI.Visible = false
+    gui.Buttons.Upload.BackgroundColor3 = Color3.fromRGB(32,32,32)
+    gui.Buttons.Upload.ImageColor3 = Color3.new(1,1,1)
+    UploadIsBusy = true
+    WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, false)
+    local _, delete_popup = PopupTool.createStatePopup("Uploading asset...")
+    local success, result = pcall(function()
+        assert(UploadData, "No data to upload.")
+        local TargetID = gui.MainContainer.UploadUI.Overwrite.ContentId.Text
+        local IsValidID = is_valid_integer(TargetID)
+        if not IsValidID then
+            PopupTool.createPopup("ERROR", "Invalid asset ID. Must be an integer.")
+            return
+        end
+        local RealID = tonumber(TargetID)
+        for _, x in OverwriteMenuItemList do
+            if x:GetAttribute("ID") == RealID then
+                IsValidID = true
+                break
+            end
+        end
+        if not IsValidID then
+            PopupTool.createPopup("ERROR", "Invalid asset ID. You don't own an asset with this ID.")
+            return
+        end
+        local SourceId = NetHttp.UploadBinary(UploadData)
+        if not SourceId then return end
+        local request_data = {
+            source_id = SourceId,
+            resource_version = UploadResourceVersionUsed or 1,
+        }
+        local SuccessfulUpload = NetHttp.UpdateAsset(RealID, request_data)
+        if SuccessfulUpload then
+            PopupTool.createPopup("INFO", "Asset overwritten successfully!")
+        end
+    end)
     UploadIsBusy = false
     WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, true)
     delete_popup()
