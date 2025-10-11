@@ -133,7 +133,7 @@ function mod.UpdateAsset(id: number, data)
             Headers = {
                 ["Authorization"] = ApiKeyCached,
                 ["User-ID"] = tostring(UserId),
-                ["Target-ID"] = id,
+                ["Target-ID"] = tostring(id),
             },
             Body = HttpService:JSONEncode(data),
         })

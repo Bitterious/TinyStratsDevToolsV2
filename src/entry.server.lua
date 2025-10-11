@@ -97,6 +97,8 @@ end
 
 --#endregion
 
+local load_explorer_logic_pointer
+
 --#region Upload Logic
 
 local Selection = game:GetService("Selection")
@@ -107,6 +109,7 @@ local UploadIsBusy = false
 local UploadData = nil
 local UploadResourceVersionUsed = nil
 local UploadMenuMode: "upload" | "update" | "overwrite" = "upload"
+local UploadMenuUpdateTarget = nil :: number?
 local MaxAssetSize = 5000000 -- 5 megabytes (decimal)
 local OverwriteMenuItem = gui.MainContainer.UploadUI.Overwrite.Contents.Button
 OverwriteMenuItem.Parent = nil
@@ -159,6 +162,8 @@ local function reset_upload_menu_overwrite()
         btn.Parent = overwrite.Contents
         table.insert(OverwriteMenuItemList, btn)
     end
+    overwrite.ContentId.Text = "0"
+    overwrite.SearchBox.Text = ""
     overwrite.Visible = true
     gui.MainContainer.UploadUI.Default.Visible = false
     gui.MainContainer.UploadUI.Title.Text = "[ OVERWRITE ]"
@@ -322,7 +327,6 @@ gui.MainContainer.UploadUI.Default.Upload.MouseButton1Click:Connect(function()
     WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, false)
     local _, delete_popup = PopupTool.createStatePopup("Uploading asset...")
     local success, result = pcall(function()
-        assert(UploadData, "No data to upload.")
         local AssetName = gui.MainContainer.UploadUI.Default.ItemName.Text
         local AssetDescription = gui.MainContainer.UploadUI.Default.ItemDescription.Text
         local AssetIconId = gui.MainContainer.UploadUI.Default.IconId.Text
@@ -336,20 +340,37 @@ gui.MainContainer.UploadUI.Default.Upload.MouseButton1Click:Connect(function()
             PopupTool.createPopup("ERROR", "Invalid icon ID.")
             return
         end
-        local SourceId = NetHttp.UploadBinary(UploadData)
-        if not SourceId then return end
-        local request_data = {
-            name = AssetName,
-            description = AssetDescription,
-            icon = `rbxassetid://{AssetIconId}`,
-            visibility = AssetPrivacy,
-            source_id = SourceId,
-            resource_version = UploadResourceVersionUsed or 1,
-            content_type = AssetType,
-        }
-        local SuccessfulUpload = NetHttp.UploadAsset(request_data)
-        if SuccessfulUpload then
-            PopupTool.createPopup("INFO", "Asset uploaded successfully!")
+        if UploadMenuMode == "upload" then
+            assert(UploadData, "No data to upload.")
+            local SourceId = NetHttp.UploadBinary(UploadData)
+            if not SourceId then return end
+            local request_data = {
+                name = AssetName,
+                description = AssetDescription,
+                icon = `rbxassetid://{AssetIconId}`,
+                visibility = AssetPrivacy,
+                source_id = SourceId,
+                resource_version = UploadResourceVersionUsed or 1,
+                content_type = AssetType,
+            }
+            local SuccessfulUpload = NetHttp.UploadAsset(request_data)
+            if SuccessfulUpload then
+                PopupTool.createPopup("INFO", "Asset uploaded successfully!")
+            end
+        elseif UploadMenuMode == "update" then
+            assert(UploadMenuUpdateTarget, "Undefined update target.")
+            local request_data = {
+                name = AssetName,
+                description = AssetDescription,
+                icon = `rbxassetid://{AssetIconId}`,
+                visibility = AssetPrivacy,
+            }
+            local SuccessfulUpload = NetHttp.UpdateAsset(UploadMenuUpdateTarget, request_data)
+            if SuccessfulUpload then
+                PopupTool.createPopup("INFO", "Asset updated successfully!")
+            end
+        elseif UploadMenuMode == "overwrite" then
+            PopupTool.createPopup("WHAT?", "This button should normally be unclickable...")
         end
     end)
     if not success then
@@ -358,6 +379,7 @@ gui.MainContainer.UploadUI.Default.Upload.MouseButton1Click:Connect(function()
     UploadIsBusy = false
     WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, true)
     delete_popup()
+    load_explorer_logic_pointer()
 end)
 
 gui.MainContainer.UploadUI.Overwrite.Upload.MouseButton1Click:Connect(function()
@@ -398,9 +420,13 @@ gui.MainContainer.UploadUI.Overwrite.Upload.MouseButton1Click:Connect(function()
             PopupTool.createPopup("INFO", "Asset overwritten successfully!")
         end
     end)
+    if not success then
+        PopupTool.createPopup("ERROR", `Failed to overwrite data: {result}`)
+    end
     UploadIsBusy = false
     WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, true)
     delete_popup()
+    load_explorer_logic_pointer()
 end)
 
 --#endregion
@@ -460,7 +486,9 @@ local function load_explorer_content()
             local icon_raw = string.match(asset.icon, "rbxassetid://([0-9]+)")
             gui.MainContainer.UploadUI.Default.IconId.Text = icon_raw or ""
             gui.MainContainer.UploadUI.Default.RawData.Text = TableToTextData(asset)
+            gui.MainContainer.UploadUI.Default.OverwriteMenu.Visible = false
             UploadMenuMode = "update"
+            UploadMenuUpdateTarget = asset.id
             gui.MainContainer.UploadUI.Position = UDim2.fromScale(.5, .5)
             gui.Buttons.Upload.BackgroundColor3 = Color3.new(1,1,1)
             gui.Buttons.Upload.ImageColor3 = Color3.fromRGB(32,32,32)
@@ -526,6 +554,7 @@ local function load_explorer_content()
     end
     delete_popup()
 end
+load_explorer_logic_pointer = load_explorer_content
 local ReloadBusy = false
 gui.MainContainer.Explorer.Refresh.MouseButton1Click:Connect(function()
     if ReloadBusy then return end
