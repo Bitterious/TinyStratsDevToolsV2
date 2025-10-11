@@ -107,6 +107,7 @@ local deflate = require(script.Parent.utils.deflate)
 local UploadIsBusy = false
 local UploadData = nil
 local UploadMenuMode: "upload" | "update" | "overwrite" = "upload"
+local MaxAssetSize = 5000000 -- 5 megabytes (decimal)
 local OverwriteMenuItem = gui.MainContainer.UploadUI.Overwrite.Contents.Button
 OverwriteMenuItem.Parent = nil
 local OverwriteMenuItemList = {}
@@ -136,7 +137,7 @@ local function reset_upload_menu_overwrite()
     -- remove unsupported asset types before making the buttons
     for i = #owned_assets, 1, -1 do
         local asset = owned_assets[i]
-        if not table.find(allowed_types, asset.content_type) then
+        if not table.find(allowed_types, (asset.content_type or "game/map")) then
             table.remove(owned_assets, i)
         end
     end
@@ -145,6 +146,10 @@ local function reset_upload_menu_overwrite()
         btn.ContentName.Text = asset.name
         btn.ContentId.Text = `[{asset.id}]`
         btn.ContentIcon.Image = asset.icon
+        btn.MouseButton1Click:Connect(function()
+            overwrite.ContentId.Text = tostring(asset.id)
+        end)
+        btn.Name = asset.name
         btn.Parent = overwrite.Contents
         table.insert(OverwriteMenuItemList, btn)
     end
@@ -153,6 +158,20 @@ local function reset_upload_menu_overwrite()
     gui.MainContainer.UploadUI.Title.Text = "[ OVERWRITE ]"
     UploadMenuMode = "overwrite"
 end
+gui.MainContainer.UploadUI.Overwrite.SearchBox:GetPropertyChangedSignal("Text"):Connect(function()
+    local search_text = gui.MainContainer.UploadUI.Overwrite.SearchBox.Text
+    for _, x in OverwriteMenuItemList do
+        if search_text == "" then
+            x.Visible = true
+            continue
+        end
+        if string.find(x.Name, search_text) then
+            x.Visible = true
+        else
+            x.Visible = false
+        end
+    end
+end)
 
 gui.MainContainer.UploadUI.Default.OverwriteMenu.MouseButton1Click:Connect(reset_upload_menu_overwrite)
 gui.MainContainer.UploadUI.Overwrite.OverwriteMenu.MouseButton1Click:Connect(reset_upload_menu_default)
@@ -253,6 +272,10 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
             return
         end
         if not process_result then return end
+        if string.len(process_result) > MaxAssetSize then
+            PopupTool.createPopup("ERROR", `Max asset size is 5 MB. Your asset is {string.len(process_result)/1000000} MB.`)
+            return
+        end
         UploadData = process_result
         reset_upload_menu_default()
         gui.MainContainer.UploadUI.Position = UDim2.fromScale(.5, .5)

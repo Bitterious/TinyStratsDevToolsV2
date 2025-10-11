@@ -28,6 +28,7 @@ function mod.createStatePopup(message)
     task.spawn(function()
         while popup.Parent do
             local delta = task.wait()
+            if not popup.Parent then break end
             popup.Gif.Rotation += 90 * delta
         end
     end)
