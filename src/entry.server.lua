@@ -11,7 +11,7 @@ local PLUGIN_IS_VALID = true
 local API_KEY = nil
 
 local VERSION = "v2"
-local BUILD = 20251010 --YYMMDD
+local BUILD = 20251011 --YYMMDD
 
 local gui = script.Parent.OcelotGuiRev2
 
@@ -106,7 +106,10 @@ local jsonAnim = require(script.Parent.utils.jsonAnim)
 local deflate = require(script.Parent.utils.deflate)
 local UploadIsBusy = false
 local UploadData = nil
-local UploadMenuMode: "upload" | "update" = "upload"
+local UploadMenuMode: "upload" | "update" | "overwrite" = "upload"
+local OverwriteMenuItem = gui.MainContainer.UploadUI.Overwrite.Contents.Button
+OverwriteMenuItem.Parent = nil
+local OverwriteMenuItemList = {}
 
 local function reset_upload_menu_default()
     local default = gui.MainContainer.UploadUI.Default
@@ -114,7 +117,45 @@ local function reset_upload_menu_default()
     default.ItemDescription.Text = ""
     default.IconId.Text = "10925696693"
     default.RawData.Text = ""
+    default.Visible = true
+    gui.MainContainer.UploadUI.Title.Text = "[ UPLOAD ]"
+    gui.MainContainer.UploadUI.Overwrite.Visible = false
+    UploadMenuMode = "upload"
 end
+local function reset_upload_menu_overwrite()
+    local overwrite = gui.MainContainer.UploadUI.Overwrite
+    for _, x in OverwriteMenuItemList do x:Destroy() end
+    local owned_assets = NetHttp.GetAssets()
+    local allowed_types = { }
+    local current_type = UploadAssetTypeHandler.get_current_value()
+    if UploadMenuMode == "upload" then
+        if current_type == "game/map" or current_type == "asset/model" then
+            allowed_types = { "game/map", "asset/model" }
+        else allowed_types = { current_type } end
+    elseif UploadMenuMode == "update" then allowed_types = { current_type } end
+    -- remove unsupported asset types before making the buttons
+    for i = #owned_assets, 1, -1 do
+        local asset = owned_assets[i]
+        if not table.find(allowed_types, asset.content_type) then
+            table.remove(owned_assets, i)
+        end
+    end
+    for _, asset in owned_assets do
+        local btn = OverwriteMenuItem:Clone()
+        btn.ContentName.Text = asset.name
+        btn.ContentId.Text = `[{asset.id}]`
+        btn.ContentIcon.Image = asset.icon
+        btn.Parent = overwrite.Contents
+        table.insert(OverwriteMenuItemList, btn)
+    end
+    overwrite.Visible = true
+    gui.MainContainer.UploadUI.Default.Visible = false
+    gui.MainContainer.UploadUI.Title.Text = "[ OVERWRITE ]"
+    UploadMenuMode = "overwrite"
+end
+
+gui.MainContainer.UploadUI.Default.OverwriteMenu.MouseButton1Click:Connect(reset_upload_menu_overwrite)
+gui.MainContainer.UploadUI.Overwrite.OverwriteMenu.MouseButton1Click:Connect(reset_upload_menu_default)
 
 gui.MainContainer.UploadUI.Default.IconId:GetPropertyChangedSignal("Text"):Connect(function()
     local iconid = gui.MainContainer.UploadUI.Default.IconId.Text
@@ -213,7 +254,6 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
         end
         if not process_result then return end
         UploadData = process_result
-        UploadMenuMode = "upload"
         reset_upload_menu_default()
         gui.MainContainer.UploadUI.Position = UDim2.fromScale(.5, .5)
 		gui.Buttons.Upload.BackgroundColor3 = Color3.new(1,1,1)
