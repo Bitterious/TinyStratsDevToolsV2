@@ -19,7 +19,6 @@ local WindowHandler = require(script.Parent.utils.windowHandler)
 local DropdownHandler = require(script.Parent.utils.dropdownHandler)
 local PopupTool = require(script.Parent.utils.popupTool)
 local NetHttp = require(script.Parent.utils.netHttp)
-local State = require(script.Parent.utils.globalState)
 local FlipbookAnimator = require(script.Parent.utils.flipbookAnimator)
 
 local Players = game:GetService("Players")
@@ -106,11 +105,16 @@ local jsonAnim = require(script.Parent.utils.jsonAnim)
 local deflate = require(script.Parent.utils.deflate)
 local UploadIsBusy = false
 local UploadData = nil
+local UploadResourceVersionUsed = nil
 local UploadMenuMode: "upload" | "update" | "overwrite" = "upload"
 local MaxAssetSize = 5000000 -- 5 megabytes (decimal)
 local OverwriteMenuItem = gui.MainContainer.UploadUI.Overwrite.Contents.Button
 OverwriteMenuItem.Parent = nil
 local OverwriteMenuItemList = {}
+
+function is_valid_integer(s)
+  return s:match("^-?%d+$") ~= nil
+end
 
 local function reset_upload_menu_default()
     local default = gui.MainContainer.UploadUI.Default
@@ -149,6 +153,7 @@ local function reset_upload_menu_overwrite()
         btn.MouseButton1Click:Connect(function()
             overwrite.ContentId.Text = tostring(asset.id)
         end)
+        btn:SetAttribute("ID", asset.id)
         btn.Name = asset.name
         btn.Parent = overwrite.Contents
         table.insert(OverwriteMenuItemList, btn)
@@ -172,6 +177,24 @@ gui.MainContainer.UploadUI.Overwrite.SearchBox:GetPropertyChangedSignal("Text"):
         end
     end
 end)
+gui.MainContainer.UploadUI.Overwrite.ContentId:GetPropertyChangedSignal("Text"):Connect(function()
+    local overwrite_id = gui.MainContainer.UploadUI.Overwrite.ContentId.Text
+    if not is_valid_integer(overwrite_id) then
+        for _, x in OverwriteMenuItemList do
+            x.BackgroundColor3 = Color3.fromRGB(32,32,32)
+            x.ImageColor3 = Color3.new(1,1,1)
+        end
+        return
+    end
+    local id = tonumber(overwrite_id)
+    for _, x in OverwriteMenuItemList do
+        if x:GetAttribute("ID") == id then
+            x.BackgroundColor3 = Color3.fromRGB(16, 194, 0)
+        else
+            x.BackgroundColor3 = Color3.fromRGB(32,32,32)
+        end
+    end
+end)
 
 gui.MainContainer.UploadUI.Default.OverwriteMenu.MouseButton1Click:Connect(reset_upload_menu_overwrite)
 gui.MainContainer.UploadUI.Overwrite.OverwriteMenu.MouseButton1Click:Connect(reset_upload_menu_default)
@@ -188,7 +211,7 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
         UploadIsBusy = true
         WindowHandler.setButtonEnabled(gui.Buttons.Upload, false)
         local _, delete_popup = PopupTool.createStatePopup("Compiling asset...")
-        local process_success, process_result = pcall(function()
+        local process_success, process_result, latest_lib_version = pcall(function()
             local selections = Selection:Get()
             if #selections > 1 then
                 PopupTool.createPopup("ERROR", "Please only select one object.")
@@ -223,7 +246,7 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
                     PopupTool.createPopup("ENCODING ERROR", `Failed to prepare object for upload: {result}`)
                     return
                 end
-                return result
+                return result, jsonModel.get_latest_version_id()
             elseif selected.ClassName == "KeyframeSequence" then
                 UploadAssetTypeHandler.toggle_item("Animation", true)
                 UploadAssetTypeHandler.select_item("Animation")
@@ -243,7 +266,7 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
                     PopupTool.createPopup("ENCODING ERROR", `Failed to prepare sequence for upload: {result}`)
                     return
                 end
-                return result
+                return result, jsonAnim.get_latest_version_id()
             elseif selected.ClassName == "StringValue" and selected:HasTag("tsmodfs") then
                 UploadAssetTypeHandler.toggle_item("Mod", true)
                 UploadAssetTypeHandler.select_item("Mod")
@@ -258,7 +281,7 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
                     PopupTool.createPopup("COMPRESSION ERROR", `Failed to prepare mod for upload: {result}`)
                     return
                 end
-                return result
+                return result, 1
             else
                 PopupTool.createPopup("ERROR", "Unknown object type: "..selected.ClassName)
                 return
@@ -277,6 +300,7 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
             return
         end
         UploadData = process_result
+        UploadResourceVersionUsed = latest_lib_version
         reset_upload_menu_default()
         gui.MainContainer.UploadUI.Position = UDim2.fromScale(.5, .5)
 		gui.Buttons.Upload.BackgroundColor3 = Color3.new(1,1,1)
@@ -286,6 +310,51 @@ gui.Buttons.Upload.MouseButton1Click:Connect(function()
 		gui.Buttons.Upload.ImageColor3 = Color3.new(1,1,1)
     end
     gui.MainContainer.UploadUI.Visible = not gui.MainContainer.UploadUI.Visible
+end)
+
+gui.MainContainer.UploadUI.Default.Upload.MouseButton1Click:Connect(function()
+    if UploadIsBusy then return end
+    gui.MainContainer.UploadUI.Visible = false
+    UploadIsBusy = true
+    WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, false)
+    local _, delete_popup = PopupTool.createStatePopup("Uploading asset...")
+    local success, result = pcall(function()
+        assert(UploadData, "No data to upload.")
+        local AssetName = gui.MainContainer.UploadUI.Default.ItemName.Text
+        local AssetDescription = gui.MainContainer.UploadUI.Default.ItemDescription.Text
+        local AssetIconId = gui.MainContainer.UploadUI.Default.IconId.Text
+        local AssetPrivacy = UploadPrivacyHandler.get_current_value()
+        local AssetType = UploadAssetTypeHandler.get_current_value()
+        if AssetName:gsub(" ", "") == "" then
+            PopupTool.createPopup("ERROR", "Asset name cannot be empty.")
+            return
+        end
+        if not is_valid_integer(AssetIconId) then
+            PopupTool.createPopup("ERROR", "Invalid icon ID.")
+            return
+        end
+        local SourceId = NetHttp.UploadBinary(UploadData)
+        if not SourceId then return end
+        local request_data = {
+            name = AssetName,
+            description = AssetDescription,
+            icon = `rbxassetid://{AssetIconId}`,
+            visibility = AssetPrivacy,
+            source_id = SourceId,
+            resource_version = UploadResourceVersionUsed or 1,
+            content_type = AssetType,
+        }
+        local SuccessfulUpload = NetHttp.UploadAsset(request_data)
+        if SuccessfulUpload then
+            PopupTool.createPopup("INFO", "Asset uploaded successfully!")
+        end
+    end)
+    if not success then
+        PopupTool.createPopup("ERROR", `Failed to upload data: {result}`)
+    end
+    UploadIsBusy = false
+    WindowHandler.setButtonEnabled(gui.MainContainer.UploadUI.Default.Upload, true)
+    delete_popup()
 end)
 
 --#endregion

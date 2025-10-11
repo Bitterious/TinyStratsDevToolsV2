@@ -87,4 +87,42 @@ function mod.GetSource(id: number)
     return assetblob.Body, nil
 end
 
+function mod.UploadBinary(data: string)
+    local success, response = pcall(function()
+        return HttpService:RequestAsync({
+            Url = mod.Endpoint.."/standaloneapi/upload_binary",
+            Method = "POST",
+            Headers = {
+                ["Authorization"] = ApiKeyCached,
+                ["User-ID"] = tostring(UserId),
+            },
+            Body = data,
+        })
+    end)
+    if not success or response.StatusCode ~= 200 then
+        PopupTool.createPopup("Upload Error", "Failed to upload binary: " .. tostring(if success then response.Body else response))
+        return nil
+    end
+    return response.Body
+end
+
+function mod.UploadAsset(data)
+    local success, response = pcall(function()
+        return HttpService:RequestAsync({
+            Url = mod.Endpoint.."/standaloneapi/upload_asset_v2",
+            Method = "POST",
+            Headers = {
+                ["Authorization"] = ApiKeyCached,
+                ["User-ID"] = tostring(UserId),
+            },
+            Body = HttpService:JSONEncode(data),
+        })
+    end)
+    if not success or response.StatusCode ~= 200 then
+        PopupTool.createPopup("Upload Error", "Failed to upload asset: " .. tostring(if success then response.Body else response))
+        return nil
+    end
+    return true
+end
+
 return mod
