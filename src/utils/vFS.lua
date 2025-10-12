@@ -175,4 +175,118 @@ function vFS.get_id(fs, path: string)
 	return node.id
 end
 
+function vFS.get_file_handler(fs, path: string)
+    local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
+    if not node or node.type ~= "file" then
+        return nil, "cannot open " .. path .. ": No such file"
+    end
+    local handle = {
+        node = node,
+        current_position = 1,
+        is_closed = false,
+    }
+    local handle_mt = { __index = {} }
+    local function check_closed()
+        if handle.is_closed then
+            return nil, "attempt to use a closed file"
+        end
+        return true
+    end
+    function handle_mt.__index:read(mode: string | number)
+        check_closed()
+        if handle.current_position > #self.node.data then
+            return nil
+        end
+        mode = mode or "*l"
+        if type(mode) == "number" then
+            local end_pos = self.current_position + mode - 1
+            local data = string.sub(self.node.data, self.current_position, end_pos)
+            self.current_position = end_pos + 1
+            return data
+        elseif type(mode) == "string" then
+            local format = string.lower(string.sub(mode, 2))
+            if format == "a" then
+                local data = string.sub(self.node.data, self.current_position)
+                self.current_position = #self.node.data + 1
+                return data
+            elseif format == "l" then
+                local end_pos = string.find(self.node.data, "\n", self.current_position, true)
+                if end_pos then
+                    local line = string.sub(self.node.data, self.current_position, end_pos - 1)
+                    self.current_position = end_pos + 1
+                    return line
+                else
+                    local line = string.sub(self.node.data, self.current_position)
+                    self.current_position = #self.node.data + 1
+                    return line
+                end
+            elseif format == "L" then
+                 local end_pos = string.find(self.node.data, "\n", self.current_position, true)
+                 if end_pos then
+                    local line = string.sub(self.node.data, self.current_position, end_pos)
+                    self.current_position = end_pos + 1
+                    return line
+                 else
+                    local line = string.sub(self.node.data, self.current_position)
+                    self.current_position = #self.node.data + 1
+                    return line
+                 end
+            elseif format == "n" then
+                local _, end_pos, num_str = string.find(self.node.data, "^%s*(-?%d*%.?%d+)", self.current_position)
+                if num_str then
+                    self.current_position = end_pos + 1
+                    return tonumber(num_str)
+                end
+                return nil
+            end
+        end
+        error("bad argument #1 to 'read' (invalid option '" .. tostring(mode) .. "')")
+    end
+    function handle_mt.__index:write(...)
+        check_closed()
+        local args = {...}
+        local data_to_write = table.concat(args)
+        local prefix = string.sub(self.node.data, 1, self.current_position - 1)
+        local suffix = string.sub(self.node.data, self.current_position + #data_to_write)
+        self.node.data = prefix .. data_to_write .. suffix
+        self.current_position = self.current_position + #data_to_write
+        return self
+    end
+    function handle_mt.__index:seek(whence: string, offset: number)
+        check_closed()
+        whence = whence or "cur"
+        offset = offset or 0
+        local new_pos
+        if whence == "set" then
+            new_pos = 1 + offset
+        elseif whence == "cur" then
+            new_pos = self.current_position + offset
+        elseif whence == "end" then
+            new_pos = #self.node.data + 1 + offset
+        else
+            return nil, "invalid whence"
+        end
+        if new_pos < 1 then
+            new_pos = 1
+        elseif new_pos > #self.node.data + 1 then
+            new_pos = #self.node.data + 1
+        end
+        self.current_position = new_pos
+        return self.current_position - 1
+    end
+    function handle_mt.__index:lines()
+        check_closed()
+        return function()
+            return self:read("*l")
+        end
+    end
+    function handle_mt.__index:close()
+        if self.is_closed then return nil, "file is already closed" end
+        self.is_closed = true
+        self.node = nil
+        return true
+    end
+    return setmetatable(handle, handle_mt)
+end
+
 return vFS
