@@ -5,6 +5,7 @@ local DEFAULT_MAX_FILE_SIZE = 2 * MEGABYTE
 local DEFAULT_MAX_TOTAL_SIZE = 2 * MEGABYTE
 
 local function new_node(id: number, name: string, data: string?)
+	local now = DateTime.now()
 	return {
 		-- NODE DATA
 		id = id,
@@ -14,6 +15,9 @@ local function new_node(id: number, name: string, data: string?)
 		parent = nil,
 		next = nil, prev = nil,
 		first = nil,
+		-- ATTRIBUTES
+		modified_at = now.UnixTimestamp,
+		created_at = now.UnixTimestamp,
 	}
 end
 
@@ -64,6 +68,8 @@ function vFS.to_binary_string(fs)
 		insert("I4", node.prev or 0)
 		insert("I4", node.next or 0)
 		insert("I4", node.first or 0)
+		insert("I4", node.created_at)
+		insert("I4", node.modified_at)
 
 		if node.data ~= nil then
 			insert("I4", #node.data)
@@ -99,6 +105,8 @@ function vFS.from_binary_string(raw: string)
             prev = read("I4"),
             next = read("I4"),
             first = read("I4"),
+			created_at = read("I4"),
+			modified_at = read("I4"),
             data = nil,
 		}
         if node.parent == 0 then node.parent = nil end
@@ -241,12 +249,25 @@ end
 function vFS.read_file(fs, path: string)
 	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
 	if not node then return false, "file not found" end
+	if node.data == nil then return false, "file is a directory" end
 	return node.data
 end
 function vFS.write_file(fs, path: string, data: string)
 	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
 	if not node then return false, "file not found" end
+	if node.data == nil then return false, "file is a directory" end
+	local now = DateTime.now()
+	node.modified_at = now.UnixTimestamp
 	node.data = data
+	return true
+end
+function vFS.append_file(fs, path: string, data: string)
+	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
+	if not node then return false, "file not found" end
+	if node.data == nil then return false, "file is a directory" end
+	local now = DateTime.now()
+	node.modified_at = now.UnixTimestamp
+	node.data ..= data
 	return true
 end
 
@@ -428,9 +449,8 @@ end
 
 function vFS.get_file_handler(fs, path: string)
     local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
-    if not node or node.data == nil then
-        return nil, "cannot open " .. path .. ": No such file"
-    end
+    if not node then return nil, "file not found" end
+	if node.data == nil then return nil, "file is a directory" end
     local handle = {
         node = node,
         current_position = 1,
@@ -538,6 +558,15 @@ function vFS.get_file_handler(fs, path: string)
         return true
     end
     return setmetatable(handle, handle_mt)
+end
+
+function vFS.get_dates(fs, path: string)
+	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
+	if not node then return false, "file not found" end
+	return {
+		created_at = node.created_at,
+		modified_at = node.modified_at,
+	}
 end
 
 return vFS
