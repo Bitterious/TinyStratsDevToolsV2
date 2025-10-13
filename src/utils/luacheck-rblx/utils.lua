@@ -4,7 +4,6 @@ local vFS = require(script.Parent.Parent.vFS)
 local utils = {}
 
 utils.dir_sep = "/"
-utils.is_windows = false -- nuh uh
 utils.current_fs = nil
 
 local bom = "\239\187\191"
@@ -16,6 +15,7 @@ function utils.read_file(file)
         local get_err
         handle, get_err = vFS.get_file_handler(utils.current_fs, file)
         if not handle then
+            get_err = utils.unprefix(get_err, file .. ": ")
             return nil, "couldn't read: " .. get_err
         end
     else handle = file end
@@ -50,11 +50,11 @@ function utils.load_config(path, env)
     end
     local func, load_err = utils.load(src, env, "chunk")
     if not func then
-        return nil, "syntax", "line " .. ""
+        return nil, "syntax", "line " .. utils.unprefix(load_err, "[string \"chunk\"]:")
     end
     local ok, res = pcall(func)
     if not ok then
-        return nil, "runtime", "line " .. ""
+        return nil, "runtime", "line " .. utils.unprefix(res, "[string \"chunk\"]:")
     end
     return env, res
 end
