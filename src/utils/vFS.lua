@@ -1,12 +1,16 @@
 local vFS = {}
-local httpsv = game:GetService("HttpService")
+
+local MEGABYTE = 1024^2
+local DEFAULT_MAX_FILE_SIZE = 2 * MEGABYTE
+local DEFAULT_MAX_TOTAL_SIZE = 2 * MEGABYTE
 
 local function new_node(id: number, name: string, data: string?)
 	return {
+		-- NODE DATA
 		id = id,
 		name = name,
 		data = data,
-		isfile = data ~= nil,
+		-- TREE DATA
 		parent = nil,
 		next = nil, prev = nil,
 		first = nil,
@@ -18,18 +22,106 @@ function vFS.new()
 		nodes = {},
 		cache = { id_to_path = {}, path_to_id = {} },
 		current_dir = "/",
+		current_size = nil,
+		max_file_size = DEFAULT_MAX_FILE_SIZE,
+		max_total_size = DEFAULT_MAX_TOTAL_SIZE,
 	}
 	return fs
 end
 
-function vFS.to_string(fs)
-	return httpsv:JSONEncode(fs.nodes)
+local function rebuild_cache_tree(fs, node, path)
+	fs.cache.path_to_id[path] = node.id
+	fs.cache.id_to_path[node.id] = path
+	if node.first then
+		local current = fs.nodes[node.first]
+		while current do
+			rebuild_cache_tree(fs, current, path .. "/" .. current.name)
+			if not current.next then break end
+			current = fs.nodes[current.next]
+		end
+	end
 end
-function vFS.from_string(str: string)
+
+function vFS.to_binary_string(fs)
+	local buffer = {}
+	local function insert(...)
+		local d = {...}
+		if #d == 0 then return end
+		local str
+		if #d == 1 then str = d[1]
+		else str = string.pack(...) end
+		table.insert(buffer, str)
+	end
+	for _, node in fs.nodes do
+		if not node then continue end
+		local flags = if node.data ~= nil then 1 else 0
+		table.insert(buffer, string.char(flags))
+
+		insert("I4", node.id)
+		insert("I2", #node.name)
+		insert(node.name)
+		insert("I4", node.parent or 0)
+		insert("I4", node.prev or 0)
+		insert("I4", node.next or 0)
+		insert("I4", node.first or 0)
+
+		if node.data ~= nil then
+			insert("I4", #node.data)
+			insert(node.data)
+		end
+	end
+	local raw = table.concat(buffer)
+	return raw
+end
+
+function vFS.from_binary_string(raw: string)
 	local fs = vFS.new()
-	fs.nodes = httpsv:JSONDecode(str)
+	local pos = 1
+	local nodes = {}
+	local function read(format, len)
+		if format then
+			local value = string.unpack(format, raw, pos)
+			pos += string.packsize(format)
+			return value
+		else
+			local value = raw:sub(pos, pos + len - 1)
+			pos += len
+			return value
+		end
+	end
+	while pos <= #raw do
+		local flags = raw:byte(pos)
+		pos += 1
+		local node = {
+            id = read("I4"),
+            name = read(nil, read("I2")),
+            parent = read("I4"),
+            prev = read("I4"),
+            next = read("I4"),
+            first = read("I4"),
+            data = nil,
+		}
+        if node.parent == 0 then node.parent = nil end
+        if node.prev == 0 then node.prev = nil end
+        if node.next == 0 then node.next = nil end
+        if node.first == 0 then node.first = nil end
+        if flags == 1 then
+            local data_len = read("I4")
+            node.data = read(nil, data_len)
+        end
+        nodes[node.id] = node
+	end
+    fs.nodes = nodes
+    for i, node in pairs(fs.nodes) do
+        if not node.parent then
+			rebuild_cache_tree(fs, node, "/" .. node.name)
+        end
+    end
 	return fs
 end
+-- redirect old functions to new ones
+function vFS.to_string(fs) return vFS.to_binary_string(fs) end
+function vFS.from_string(raw) return vFS.from_binary_string(raw) end
 
 local function parse_path(path: string, current_dir: string)
 	local path_array = path:split("/")
@@ -66,6 +158,23 @@ local function parse_path(path: string, current_dir: string)
 		end
 	end
 	return absolute_path, target_name, parent_path
+end
+
+function vFS.get_path(fs, id: number)
+	if fs.cache.id_to_path[id] then
+		return fs.cache.id_to_path[id]
+	end
+	local node = fs.nodes[id]
+	if not node then return nil, "invalid id" end
+	local path
+	if not node.parent then
+		path = "/" .. node.name
+	else
+		path = vFS.get_path(fs, node.parent) .. "/" .. node.name
+	end
+	fs.cache.id_to_path[id] = path
+	fs.cache.path_to_id[path] = id
+	return path
 end
 
 function vFS.find_node(fs, absolute_path: string)
@@ -117,7 +226,8 @@ function vFS.ls(fs, dir: string?)
 		return rootless
 	end
 	local node = vFS.find_node(fs, absolute_dir)
-	if not node then return end
+	if not node then return false, "directory not found" end
+	if node.data then return false, "path is a file" end
 	local list = {}
 	local search = fs.nodes[node.first]
 	while search do
@@ -130,26 +240,29 @@ end
 
 function vFS.read_file(fs, path: string)
 	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
-	if not node then return end
+	if not node then return false, "file not found" end
 	return node.data
 end
 function vFS.write_file(fs, path: string, data: string)
 	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
-	if not node then return end
+	if not node then return false, "file not found" end
 	node.data = data
+	return true
 end
 
 function vFS.file_exists(fs, path: string)
 	return vFS.find_node(fs, parse_path(path, fs.current_dir)) ~= nil
 end
 
-function vFS.create_file(fs, rpath: string, data: string?)
+-- if the data param is nil it is a directory else it is a file
+function vFS.create_object(fs, rpath: string, data: string?)
 	local path, name, parentpath = parse_path(rpath, fs.current_dir)
-	if vFS.find_node(fs, path) then return end
+	if vFS.find_node(fs, path) then return false, "file already exists" end
 	local parent = vFS.find_node(fs, parentpath)
 	local new_id = #fs.nodes + 1
 	local node = new_node(new_id, name, data or "")
 	if parent then
+		if parent.data then return false, "parent is a file" end -- parent is a file
 		node.parent = parent.id
 		if not parent.first then
 			parent.first = new_id
@@ -162,22 +275,160 @@ function vFS.create_file(fs, rpath: string, data: string?)
 			node.prev = last.id
 		end
 	end
+	fs.cache.id_to_path[new_id] = path
+	fs.cache.path_to_id[path] = new_id
 	fs.nodes[new_id] = node
 	return node
 end
-function vFS.remove_file(fs, path: string)
-	--TODO: implement
+
+function vFS.remove_object(fs, path: string)
+	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
+	if not node then return false, "file not found" end
+	if node.prev then
+		fs.nodes[node.prev].next = node.next
+	elseif node.parent then
+		fs.nodes[node.parent].first = node.next
+	end
+	if node.next then
+		fs.nodes[node.next].prev = node.prev
+	end
+	fs.nodes[node.id] = nil
+	fs.cache.path_to_id[node.name] = nil
+	fs.cache.id_to_path[node.id] = nil
+	if node.first then -- this is a directory
+		local current = fs.nodes[node.first]
+		while current do
+			vFS.remove_object(fs, vFS.get_path(fs, current.id))
+			if not current.next then break end
+			current = fs.nodes[current.next]
+		end
+	end
+	return true
+end
+
+function vFS.move(fs, rpath: string, target: string)
+	local path, _, _ = parse_path(rpath, fs.current_dir)
+	local node = vFS.find_node(fs, path)
+	if not node then return false, "file not found" end
+	local tpath, tname, tparent_path = parse_path(target, fs.current_dir)
+	local target_node = vFS.find_node(fs, tpath)
+	if target_node then return false, "target already exists" end
+	local target_parent = vFS.find_node(fs, tparent_path)
+	if not target_parent then return false, "target path not found" end
+	if target_parent.data then return false, "target is a file" end
+	if node.parent then
+		local parent = fs.nodes[node.parent]
+		if parent.first == node.id then
+			parent.first = node.next
+		end
+		if node.prev then
+			fs.nodes[node.prev].next = node.next
+		end
+		if node.next then
+			fs.nodes[node.next].prev = node.prev
+		end
+	end
+	node.parent = target_parent.id
+	node.name = tname
+	if not target_parent.first then
+		target_parent.first = node.id
+	else
+		local last = fs.nodes[target_parent.first]
+		while last.next do
+			last = fs.nodes[last.next]
+		end
+		last.next = node.id
+		node.prev = last.id
+	end
+	fs.cache.path_to_id[tpath] = node.id
+	fs.cache.id_to_path[node.id] = tpath
+	return true
+end
+
+local function clone_directory(fs, node, target)
+	local parent = vFS.create_object(fs, target, nil)
+	local current = fs.nodes[node.first]
+	while current do
+		if current.data then
+			vFS.create_object(fs, target .. "/" .. current.name, current.data)
+		else
+			clone_directory(fs, current, target .. "/" .. current.name)
+		end
+	end
+	return parent
+end
+
+function vFS.copy(fs, source: string, target: string)
+	local path, _, _ = parse_path(source, fs.current_dir)
+	local node = vFS.find_node(fs, path)
+	if not node then return false, "file not found" end
+	local tpath, _, tparent_path = parse_path(target, fs.current_dir)
+	local target_node = vFS.find_node(fs, tpath)
+	if target_node then return false, "target already exists" end
+	local target_parent = vFS.find_node(fs, tparent_path)
+	if not target_parent then return false, "target path not found" end
+	if target_parent.data then return false, "target is a file" end
+	if node.data then
+		return vFS.create_object(fs, target, node.data)
+	else
+		return clone_directory(fs, node, target)
+	end
+end
+
+function vFS.get_file_size(fs, path: string)
+	local data = vFS.read_file(fs, path)
+	if not data then return -1 end
+	return string.len(data)
+end
+function vFS.get_directory_size(fs, path: string)
+	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
+	if not node then return -1 end
+	if node.data then return -1 end
+	local size = 0
+	local current = fs.nodes[node.first]
+	while current do
+		if current.data then
+			size = size + string.len(current.data)
+		else
+			size = size + vFS.get_directory_size(fs, vFS.get_path(fs, current.id))
+		end
+	end
+	return size
+end
+
+function vFS.get_parent_path(fs, path: string)
+	local _, _, parent_path = parse_path(path, fs.current_dir)
+	return parent_path
+end
+
+function vFS.is_file(fs, path: string)
+	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
+	if not node then return nil, "file not found" end
+	return node.data ~= nil
+end
+
+function vFS.get_absolute_path(fs, path: string)
+	local abspath, _, _ = parse_path(path, fs.current_dir)
+	return abspath
+end
+
+function vFS.cd(fs, path: string)
+	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
+	if not node then return nil, "target path doesn't exist" end
+	if node.data then return nil, "target path is a file" end
+	fs.current_dir = node.name
+	return true
 end
 
 function vFS.get_id(fs, path: string)
 	local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
-	if not node then return end
+	if not node then return false, "file not found" end
 	return node.id
 end
 
 function vFS.get_file_handler(fs, path: string)
     local node = vFS.find_node(fs, parse_path(path, fs.current_dir))
-    if not node or node.type ~= "file" then
+    if not node or node.data == nil then
         return nil, "cannot open " .. path .. ": No such file"
     end
     local handle = {
