@@ -222,7 +222,7 @@ function vFS.find_node(fs, absolute_path: string)
 	return current
 end
 
-function vFS.ls(fs, dir: string?)
+function vFS.ls(fs, dir: string?, recursive: boolean)
 	dir = dir or "/"
 	local absolute_dir = parse_path(dir::string, fs.current_dir)
 	if absolute_dir == "/" then
@@ -230,6 +230,12 @@ function vFS.ls(fs, dir: string?)
 		for i, node in fs.nodes do
 			if not node.parent then
 				table.insert(rootless, node)
+				if recursive and node.data == nil then
+					local children = vFS.ls(fs, "/"..node.name, true)
+					for _, child in children do
+						table.insert(rootless, child)
+					end
+				end
 			end
 		end
 		return rootless
@@ -241,6 +247,12 @@ function vFS.ls(fs, dir: string?)
 	local search = fs.nodes[node.first]
 	while search do
 		table.insert(list, search)
+		if recursive and search.data == nil then
+			local children = vFS.ls(fs, dir.."/"..search.name, true)
+			for _, child in children do
+				table.insert(list, child)
+			end
+		end
 		if not search.next then break end
 		search = fs.nodes[search.next]
 	end
