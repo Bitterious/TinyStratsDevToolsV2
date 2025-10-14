@@ -3,6 +3,7 @@ local vFS = require(script.Parent.Parent.vFS)
 
 local utils = {}
 
+utils.luacheck_version = "0.23.0"
 utils.dir_sep = "/"
 utils.current_fs = nil
 

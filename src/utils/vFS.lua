@@ -1,4 +1,5 @@
 local vFS = {}
+vFS.version = "0.1.0"
 
 local MEGABYTE = 1024^2
 local DEFAULT_MAX_FILE_SIZE = 2 * MEGABYTE
