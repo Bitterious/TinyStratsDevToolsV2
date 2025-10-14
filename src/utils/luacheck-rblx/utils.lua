@@ -70,6 +70,16 @@ function utils.array_to_set(array)
     return result
 end
 
+function utils.concat_arrays(array)
+	local res = {}
+	for _, subarray in ipairs(array) do
+		for _, item in ipairs(subarray) do
+			table.insert(res, item)
+		end
+	end
+	return res
+end
+
 function utils.update(t1, t2)
     for k, v in pairs(t2) do
         t1[k] = v
