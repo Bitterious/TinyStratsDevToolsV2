@@ -1,11 +1,12 @@
 local mod = {}
 local TSSignal = require(script.Parent.signalLibrary)
 
-function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
+function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?, select_style: boolean?, frameSize: UDim2?)
+    select_style = if select_style == nil then true else select_style
     local dropdownImage = textButton:FindFirstChildWhichIsA("ImageLabel")
     local dropdownItem = textButton:FindFirstChildWhichIsA("TextLabel")
-    if not dropdownImage or not dropdownItem then
-        error("[DropdownHandler] No dropdown image or item found in button " .. textButton.Name)
+    if not dropdownItem and select_style then
+        error("[DropdownHandler] Item found in button " .. textButton.Name)
     end
     local expanded = false
     local currentValue = nil
@@ -14,12 +15,12 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
     for _, _ in items do itemcount += 1 end
     local firstname, firstvalue = next(items)
     currentValue = firstvalue
-    dropdownItem.Text = firstname or "[Broken Dropdown]"
+    if select_style then dropdownItem.Text = firstname or "[Broken Dropdown]" end
     local dropdownFrame = Instance.new("Frame")
     dropdownFrame.Name = "DropdownFrame"
     dropdownFrame.BackgroundColor3 = textButton.BackgroundColor3
     dropdownFrame.BorderSizePixel = 0
-    dropdownFrame.Size = UDim2.new(1, 0, 0, 0)
+    dropdownFrame.Size = frameSize or UDim2.new(1, 0, 0, 0)
     dropdownFrame.Position = UDim2.new(0, 0, 1, 0)
     dropdownFrame.ClipsDescendants = true
     dropdownFrame.ZIndex = textButton.ZIndex + 1
@@ -38,12 +39,14 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
     local disabledItems = {}
     local buttons = {}
     local changesignal, changefire = TSSignal()
+    local reference = textButton
+    if select_style then reference = dropdownItem end
     for name, value in items do
         local itemButton = Instance.new("TextButton")
         itemButton.Text = name
-        itemButton.TextColor3 = dropdownItem.TextColor3
-        itemButton.FontFace = dropdownItem.FontFace
-        itemButton.TextSize = dropdownItem.TextSize
+        itemButton.TextColor3 = reference.TextColor3
+        itemButton.FontFace = reference.FontFace
+        itemButton.TextSize = reference.TextSize
         itemButton.Name = name
         itemButton.BackgroundColor3 = dropdownFrame.BackgroundColor3:Lerp(Color3.new(0,0,0), .1)
         itemButton.BorderSizePixel = 0
@@ -52,11 +55,13 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
         itemButton.Parent = dropdownFrame
         itemButton.MouseButton1Click:Connect(function()
             if disabledItems[name] then return end
-            currentValue = value
-            dropdownItem.Text = name
+            if select_style then 
+                currentValue = value
+                dropdownItem.Text = name
+            end
             expanded = false
-            dropdownImage.Rotation = 0
-            dropdownFrame:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+            if dropdownImage then dropdownImage.Rotation = 0 end
+            dropdownFrame:TweenSize(frameSize or UDim2.new(1, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
             changefire(value)
         end)
         buttons[name] = itemButton
@@ -64,12 +69,15 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
     end
     textButton.MouseButton1Click:Connect(function()
         expanded = not expanded
-        dropdownImage.Rotation = if expanded then 180 else 0
+        if dropdownImage then dropdownImage.Rotation = if expanded then 180 else 0 end
+        local targetsize = frameSize or UDim2.new(1, 0, 0, 0)
         if expanded then
-            local targetHeight = itemcount * 30 + 8
-            dropdownFrame:TweenSize(UDim2.new(1, 0, 0, targetHeight), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+            local itemsize = textButton.AbsoluteSize.Y
+            local targetHeight = itemcount * itemsize + 8
+            dropdownFrame:TweenSize(targetsize + UDim2.fromOffset(0, targetHeight), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+            for _, x in buttons do x.Size = UDim2.new(1, 0, 0, itemsize) end
         else
-            dropdownFrame:TweenSize(UDim2.new(1, 0, 0, 0), Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
+            dropdownFrame:TweenSize(targetsize, Enum.EasingDirection.Out, Enum.EasingStyle.Quad, 0.2, true)
         end
     end)
     return {
@@ -79,8 +87,10 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
                 currentValue = nil
                 for n, v in items do
                     if disabledItems[n] then continue end
-                    currentValue = v
-                    dropdownItem.Text = n
+                    if select_style then
+                        currentValue = v
+                        dropdownItem.Text = n
+                    end
                     break
                 end
             end
@@ -92,12 +102,13 @@ function mod.createDropdown(textButton: TextButton, _items: {[string]: any}?)
                     button.BackgroundColor3 = dropdownFrame.BackgroundColor3:Lerp(Color3.new(1,1,1), .1)
                 else
                     button.AutoButtonColor = true
-                    button.TextColor3 = dropdownItem.TextColor3
+                    button.TextColor3 = reference.TextColor3
                     button.BackgroundColor3 = dropdownFrame.BackgroundColor3:Lerp(Color3.new(0,0,0), .1)
                 end
             end
         end,
         select_item = function(name: string)
+            if not select_style then return end
             currentValue = items[name]
             dropdownItem.Text = name
         end,

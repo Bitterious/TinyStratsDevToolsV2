@@ -2,7 +2,7 @@
 	<Meta name="ExplicitAutoJoints">true</Meta>
 	<External>null</External>
 	<External>nil</External>
-	<Item class="ScreenGui" referent="RBXFD5A64D79EDA472AB7B920F7C09C81E4">
+	<Item class="ScreenGui" referent="RBXA08D6FAC14F24989B7CCCA27D393E8A3">
 		<Properties>
 			<bool name="ClipToDeviceSafeArea">true</bool>
 			<int name="DisplayOrder">0</int>
@@ -25,21 +25,23 @@
 			<int64 name="SourceAssetId">-1</int64>
 			<BinaryString name="Tags"></BinaryString>
 		</Properties>
-		<Item class="LocalScript" referent="RBX5F5E147E5B1846588DA9A9752BAAF46C">
+		<Item class="LocalScript" referent="RBXB35AA71FD05643ECBD170B03B554D281">
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[local tweenservice = game:GetService("TweenService")
 local gui = script.Parent
 
 local toggleti = TweenInfo.new(.1, Enum.EasingStyle.Linear)
-local menutoggled = false
 
 gui.Buttons.Size = UDim2.fromOffset(0, 64)
 gui.MainContainer.Visible = false
 gui.MainContainer.Explorer.Visible = false
 gui.MainContainer.UploadUI.Visible = false
 gui.MenuToggle.MouseButton1Click:Connect(function()
-	menutoggled = not menutoggled
-	if menutoggled then
+	gui.MainContainer.Visible = not gui.MainContainer.Visible
+end)
+
+gui.MainContainer:GetPropertyChangedSignal("Visible"):Connect(function()
+	if gui.MainContainer.Visible then
 		tweenservice:Create(gui.MenuToggle.Image.ImageLabel, toggleti, {
 			Rotation = 90
 		}):Play()
@@ -55,12 +57,11 @@ gui.MenuToggle.MouseButton1Click:Connect(function()
 		}):Play()
 		tweenservice:Create(gui.MenuToggle.UIGradient, toggleti, {
 			Offset = Vector2.new(1, 0)
-		}):Play()
+		}):Play()W
 		tweenservice:Create(gui.Buttons, toggleti, {
 			Size = UDim2.fromOffset(0, 64)
 		}):Play()
 	end
-	gui.MainContainer.Visible = menutoggled
 end)
 
 gui.Buttons.Owned.MouseButton1Click:Connect(function()
@@ -86,7 +87,7 @@ end)]]></ProtectedString>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
-		<Item class="TextButton" referent="RBXDFB597952FCB4A14997D42CE9C82078A">
+		<Item class="TextButton" referent="RBXF9C2E6544BB04D21B51E94CB0E132A61">
 			<Properties>
 				<Font name="FontFace">
 					<Family><url>rbxasset://fonts/families/SourceSansPro.json</url></Family>
@@ -186,7 +187,7 @@ end)]]></ProtectedString>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="UIGradient" referent="RBX626F30E40FE94450832BA9626E92B040">
+			<Item class="UIGradient" referent="RBX30FB38C847E74AFE81EBE9EB667238C0">
 				<Properties>
 					<ColorSequence name="Color">0 0.12549 0.12549 0.12549 0 0.25 0.12549 0.12549 0.12549 0 0.75 1 1 1 0 1 1 1 1 0 </ColorSequence>
 					<bool name="Enabled">true</bool>
@@ -204,7 +205,7 @@ end)]]></ProtectedString>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="Frame" referent="RBX1DE2885DEF3F40409D47A933260AE389">
+			<Item class="Frame" referent="RBX0842079CEB4843878E584E4C5EFB54A1">
 				<Properties>
 					<token name="Style">0</token>
 					<bool name="Active">false</bool>
@@ -267,7 +268,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="ImageLabel" referent="RBX3D8F40D378F845E58E48F71017BBB449">
+				<Item class="ImageLabel" referent="RBX9BB949FE61D843A5A15AB41FCF33796A">
 					<Properties>
 						<Content name="Image"><url>rbxassetid://138240908011187</url></Content>
 						<Color3 name="ImageColor3">
@@ -366,7 +367,7 @@ end)]]></ProtectedString>
 				</Item>
 			</Item>
 		</Item>
-		<Item class="Frame" referent="RBX2AD433D8C40942AAAFE7C3381017D9B8">
+		<Item class="Frame" referent="RBX3BD4ACD32760470D81E0B387854B9F7B">
 			<Properties>
 				<token name="Style">0</token>
 				<bool name="Active">false</bool>
@@ -429,7 +430,7 @@ end)]]></ProtectedString>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="ImageButton" referent="RBXA452902EFF384CE6BBAF4F02E1B3DD9C">
+			<Item class="ImageButton" referent="RBX4D96E2659B684532AE80491F98C3FC95">
 				<Properties>
 					<Content name="HoverImage"><null></null></Content>
 					<Content name="Image"><url>rbxassetid://85829139703948</url></Content>
@@ -533,7 +534,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UISizeConstraint" referent="RBX67659DCFF7B94F9EB05FE546E1D94347">
+				<Item class="UISizeConstraint" referent="RBX4A8CEBABE8CE49999E8C2E62BA74C2CF">
 					<Properties>
 						<Vector2 name="MaxSize">
 							<X>INF</X>
@@ -552,7 +553,7 @@ end)]]></ProtectedString>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ImageButton" referent="RBX8ECAA4E7F2474E028CD16EA0EC3C51AB">
+			<Item class="ImageButton" referent="RBX435D3A05AF304CF2BAB7DE01F5F9E592">
 				<Properties>
 					<Content name="HoverImage"><null></null></Content>
 					<Content name="Image"><url>rbxassetid://84468964332046</url></Content>
@@ -656,7 +657,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UISizeConstraint" referent="RBX5624BB7AE0CD49C293E65E30A378C074">
+				<Item class="UISizeConstraint" referent="RBX2F88D6518DE9468E9EEF530C550C83AC">
 					<Properties>
 						<Vector2 name="MaxSize">
 							<X>INF</X>
@@ -675,7 +676,7 @@ end)]]></ProtectedString>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ImageButton" referent="RBX5CDC1D7DE093447F800E5D6BE7318550">
+			<Item class="ImageButton" referent="RBX11807DE7E03344AD81D7A3EB276B082A">
 				<Properties>
 					<Content name="HoverImage"><null></null></Content>
 					<Content name="Image"><url>rbxassetid://106060437051852</url></Content>
@@ -779,7 +780,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UISizeConstraint" referent="RBX1A0C67CB7DF244A8BD6922937A05E753">
+				<Item class="UISizeConstraint" referent="RBX7F0F28003515454DBDFA1DF58BFEC731">
 					<Properties>
 						<Vector2 name="MaxSize">
 							<X>INF</X>
@@ -798,7 +799,7 @@ end)]]></ProtectedString>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ImageButton" referent="RBX3C4AA6B948FD4D83B24EAB1F5CA73E1C">
+			<Item class="ImageButton" referent="RBXF79921F2446847EB87F2FFFA837FFD8B">
 				<Properties>
 					<Content name="HoverImage"><null></null></Content>
 					<Content name="Image"><url>rbxassetid://81543762120247</url></Content>
@@ -902,7 +903,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UISizeConstraint" referent="RBXE78344F78EFE4E238C06FD846A3319D2">
+				<Item class="UISizeConstraint" referent="RBXF1D8BFA589FD479A8E7B579618E07144">
 					<Properties>
 						<Vector2 name="MaxSize">
 							<X>INF</X>
@@ -922,7 +923,7 @@ end)]]></ProtectedString>
 				</Item>
 			</Item>
 		</Item>
-		<Item class="TextLabel" referent="RBX9F5C5AC2A36D4D9582F9CE6C10A641C6">
+		<Item class="TextLabel" referent="RBX0FA987FA8A024EF5807A9D7AFCE1223F">
 			<Properties>
 				<Font name="FontFace">
 					<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -1016,7 +1017,7 @@ end)]]></ProtectedString>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
-		<Item class="Frame" referent="RBXC49F32C5813A4F38A62F7D006A9D4773">
+		<Item class="Frame" referent="RBX93CAD32D59054BAEA8A0CB5E554599EF">
 			<Properties>
 				<token name="Style">0</token>
 				<bool name="Active">false</bool>
@@ -1079,7 +1080,7 @@ end)]]></ProtectedString>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="Frame" referent="RBX90E90034A8D44E82BDD912C589F5E849">
+			<Item class="Frame" referent="RBX2125ED4E732548CA9B6C7CC4517B8666">
 				<Properties>
 					<token name="Style">0</token>
 					<bool name="Active">false</bool>
@@ -1126,7 +1127,7 @@ end)]]></ProtectedString>
 						<YO>312</YO>
 					</UDim2>
 					<token name="SizeConstraint">0</token>
-					<bool name="Visible">true</bool>
+					<bool name="Visible">false</bool>
 					<int name="ZIndex">1</int>
 					<bool name="AutoLocalize">true</bool>
 					<Ref name="RootLocalizationTable">null</Ref>
@@ -1142,7 +1143,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="TextLabel" referent="RBXF0B33CA658FA4213A57BDB0D4B4EB45E">
+				<Item class="TextLabel" referent="RBX40880933ACF94AECA7CA2A57C5A8E592">
 					<Properties>
 						<Font name="FontFace">
 							<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -1235,7 +1236,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="UIPadding" referent="RBX9022669CF63D4CD9A621C190818B0CF0">
+					<Item class="UIPadding" referent="RBX33E5617A25274F24A29A96FFE3C7EA6E">
 						<Properties>
 							<UDim name="PaddingBottom">
 								<S>0</S>
@@ -1262,7 +1263,7 @@ end)]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="TextButton" referent="RBX4D4EDF5734A642B3A58F3D6C9E92EFC4">
+				<Item class="TextButton" referent="RBXEB7C5A20E46E48E4903D73B40CDE7447">
 					<Properties>
 						<Font name="FontFace">
 							<Family><url>rbxasset://fonts/families/SourceSansPro.json</url></Family>
@@ -1362,7 +1363,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ImageLabel" referent="RBX79A174B702D247C98AB238A3BF35E08B">
+					<Item class="ImageLabel" referent="RBX5A57BB5CFCE340C3B026288237A1E5A9">
 						<Properties>
 							<Content name="Image"><url>rbxassetid://90285909539025</url></Content>
 							<Color3 name="ImageColor3">
@@ -1459,7 +1460,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextLabel" referent="RBXDC7424E8541D4D5B81027EFF7293D4EA">
+					<Item class="TextLabel" referent="RBXB7E40170F3A74840A0B8236017B9C403">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -1554,7 +1555,7 @@ end)]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="TextBox" referent="RBX352A978B1D7C45F5ABFFB097A60A3252">
+				<Item class="TextBox" referent="RBX5D2F494B61B145E98C477649B46D964A">
 					<Properties>
 						<bool name="ClearTextOnFocus">true</bool>
 						<Font name="FontFace">
@@ -1657,7 +1658,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="UIPadding" referent="RBXEA1B74C38A044517B580BF8FD642CC1E">
+					<Item class="UIPadding" referent="RBXA8F393A849DE4A1DA0A22B1BF76EE9C4">
 						<Properties>
 							<UDim name="PaddingBottom">
 								<S>0</S>
@@ -1684,7 +1685,7 @@ end)]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="ScrollingFrame" referent="RBX46EA0B991D2A4B67A8FC613943A3AF65">
+				<Item class="ScrollingFrame" referent="RBX8B5E1234BF5C498E93D094834095D6D8">
 					<Properties>
 						<token name="AutomaticCanvasSize">2</token>
 						<Content name="BottomImage"><url>rbxasset://textures/ui/Scroll/scroll-middle.png</url></Content>
@@ -1773,7 +1774,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="UIListLayout" referent="RBX5BC5979E652341F08F63EB807A0D96B7">
+					<Item class="UIListLayout" referent="RBXEDD654C89A564A989BE5E091BD2D2806">
 						<Properties>
 							<token name="HorizontalFlex">0</token>
 							<token name="ItemLineAlignment">0</token>
@@ -1795,7 +1796,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="UIPadding" referent="RBX15E1FC5BA2BD48689937FF432CBF7C43">
+					<Item class="UIPadding" referent="RBX578447099153408EB94050A19A82745E">
 						<Properties>
 							<UDim name="PaddingBottom">
 								<S>0</S>
@@ -1821,7 +1822,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="Frame" referent="RBX3E32ECB205E44E78B3C424223897B652">
+					<Item class="Frame" referent="RBX659D053995754D308246E0096B8A8239">
 						<Properties>
 							<token name="Style">0</token>
 							<bool name="Active">false</bool>
@@ -1884,7 +1885,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="ImageLabel" referent="RBX781477A885874C4B90C90EEE2BBE36AD">
+						<Item class="ImageLabel" referent="RBX256016FC4B264389977EAE56239B579F">
 							<Properties>
 								<Content name="Image"><url>rbxassetid://10925696693</url></Content>
 								<Color3 name="ImageColor3">
@@ -1981,7 +1982,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="TextLabel" referent="RBX9C693B1E7CE14EB0B198839E70C730FF">
+						<Item class="TextLabel" referent="RBX40660DA9F7534D829CC7E9CF7344AF38">
 							<Properties>
 								<Font name="FontFace">
 									<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -2075,7 +2076,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="TextLabel" referent="RBX12A7AD585912423391F2ACEDF575F0B2">
+						<Item class="TextLabel" referent="RBX521713982CB64C4D9043F341C761A671">
 							<Properties>
 								<Font name="FontFace">
 									<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -2169,7 +2170,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="TextButton" referent="RBX9AE7A05B4EB8425D9EC58D9B14CB12C8">
+						<Item class="TextButton" referent="RBXAB89144B527C4008A07E5443E5DA3D4C">
 							<Properties>
 								<Font name="FontFace">
 									<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -2269,7 +2270,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="TextButton" referent="RBX0F3B923BE4FD4B1180434DB30E057A2F">
+						<Item class="TextButton" referent="RBX5A9684331D744CCC9F3F92F1824E4063">
 							<Properties>
 								<Font name="FontFace">
 									<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -2369,7 +2370,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="TextButton" referent="RBXCB4A86BA80694720966D45AF070B3164">
+						<Item class="TextButton" referent="RBXEE77EEB7FE9D4D939FD1880C0E94D2CC">
 							<Properties>
 								<Font name="FontFace">
 									<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -2469,7 +2470,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="ImageButton" referent="RBX5E0A7A3C0D8E4569B44803B2F5CDCA4A">
+						<Item class="ImageButton" referent="RBXF4A35CD2144B4AE1930B60AC1B87401B">
 							<Properties>
 								<Content name="HoverImage"><null></null></Content>
 								<Content name="Image"><url>rbxassetid://125267636139646</url></Content>
@@ -2576,7 +2577,7 @@ end)]]></ProtectedString>
 						</Item>
 					</Item>
 				</Item>
-				<Item class="ImageButton" referent="RBXE7B3862B403F41C0B3BF5911EA1196F3">
+				<Item class="ImageButton" referent="RBX589B4BAE1BD34423B1553794FF483D88">
 					<Properties>
 						<Content name="HoverImage"><null></null></Content>
 						<Content name="Image"><url>rbxassetid://15000801352</url></Content>
@@ -2682,7 +2683,7 @@ end)]]></ProtectedString>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Frame" referent="RBXEABA3A98D02C42C5B8953C2F09827A4A">
+			<Item class="Frame" referent="RBX7EFD42B6E3F240159788C74E73EDB5DD">
 				<Properties>
 					<token name="Style">0</token>
 					<bool name="Active">true</bool>
@@ -2729,7 +2730,7 @@ end)]]></ProtectedString>
 						<YO>0</YO>
 					</UDim2>
 					<token name="SizeConstraint">0</token>
-					<bool name="Visible">true</bool>
+					<bool name="Visible">false</bool>
 					<int name="ZIndex">1</int>
 					<bool name="AutoLocalize">true</bool>
 					<Ref name="RootLocalizationTable">null</Ref>
@@ -2745,7 +2746,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="TextLabel" referent="RBX9641440AA8C444088A788A011B723572">
+				<Item class="TextLabel" referent="RBX31F3A23143794D96ABACF64308824844">
 					<Properties>
 						<Font name="FontFace">
 							<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -2838,7 +2839,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="UIPadding" referent="RBXC27212F5D31C4812ABD9A57F653AE021">
+					<Item class="UIPadding" referent="RBX3EA23097B77749AEBB00F7E7D150BDE4">
 						<Properties>
 							<UDim name="PaddingBottom">
 								<S>0</S>
@@ -2865,7 +2866,7 @@ end)]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="Frame" referent="RBX396B8A4E88D3475481963D43A437756C">
+				<Item class="Frame" referent="RBXBDF0EE721C444979BF81359E071322B3">
 					<Properties>
 						<token name="Style">0</token>
 						<bool name="Active">false</bool>
@@ -2928,7 +2929,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="ImageLabel" referent="RBX98B52A2844E24F599529F19DB02CF2A4">
+					<Item class="ImageLabel" referent="RBX0BB0E28FF69340339DBE98D9770010F7">
 						<Properties>
 							<Content name="Image"><url>rbxassetid://10925696693</url></Content>
 							<Color3 name="ImageColor3">
@@ -3025,7 +3026,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextBox" referent="RBXF634C2E81A4B4EE9AB5D545517A60DD6">
+					<Item class="TextBox" referent="RBX54F9216B99794A75A4CB452FF699E243">
 						<Properties>
 							<bool name="ClearTextOnFocus">false</bool>
 							<Font name="FontFace">
@@ -3129,7 +3130,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextBox" referent="RBX49F92B0E895C469DB5C163C3A4E62979">
+					<Item class="TextBox" referent="RBX77A3CF45B2C94052AC4B2B17B3D510A6">
 						<Properties>
 							<bool name="ClearTextOnFocus">false</bool>
 							<Font name="FontFace">
@@ -3232,7 +3233,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIPadding" referent="RBXCA2975080EA64E2C8FF16A2A23A65A2F">
+						<Item class="UIPadding" referent="RBX74DA0DEFAA5A4FE4A19E8CAAD045616E">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -3259,7 +3260,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="TextBox" referent="RBX81B61AE631A149159EC1BEFBC9A5C057">
+					<Item class="TextBox" referent="RBX4C62C5D43B11492DAD6AC330116B1A4A">
 						<Properties>
 							<bool name="ClearTextOnFocus">false</bool>
 							<Font name="FontFace">
@@ -3362,7 +3363,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIPadding" referent="RBX188C985E86AC4399A72620ECC9621E9D">
+						<Item class="UIPadding" referent="RBX965A4BA1A67A4C9CA20F8C87BC839426">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -3389,7 +3390,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="TextLabel" referent="RBX3907B72FD8CB4D6CB8B284E9EB293E3A">
+					<Item class="TextLabel" referent="RBX1AFBCC72991344A1BC25CA9C4286508D">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -3483,7 +3484,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextLabel" referent="RBXA455CAB971C44AB78427CB972297D055">
+					<Item class="TextLabel" referent="RBX86FA479FCA8544598467C77928F89BD4">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -3577,7 +3578,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextLabel" referent="RBX0E3CB054E8EF41219B69973708EB8820">
+					<Item class="TextLabel" referent="RBX8B289ACBFDCB42CD8F79B3AB7ED6E7CC">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -3671,7 +3672,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextButton" referent="RBXB4193BA3AAF640898EFD69A338928316">
+					<Item class="TextButton" referent="RBXFCC915ED1EC340789408573380A422FF">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/SourceSansPro.json</url></Family>
@@ -3771,7 +3772,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="ImageLabel" referent="RBX5C1E7FAE1AF242C6B62A6559EF030B06">
+						<Item class="ImageLabel" referent="RBXF5601A2AE3734BF6B4A3850221D26584">
 							<Properties>
 								<Content name="Image"><url>rbxassetid://90285909539025</url></Content>
 								<Color3 name="ImageColor3">
@@ -3789,7 +3790,7 @@ end)]]></ProtectedString>
 								</Vector2>
 								<float name="ImageTransparency">0</float>
 								<token name="ResampleMode">0</token>
-								<token name="ScaleType">0</token>
+								<token name="ScaleType">3</token>
 								<Rect2D name="SliceCenter">
 									<min>
 										<X>0</X>
@@ -3868,7 +3869,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="TextLabel" referent="RBXE5AD4F7EDD7F4D1695002BCB831DE3A8">
+						<Item class="TextLabel" referent="RBX9277E19F78224BEE8269B4640A99D989">
 							<Properties>
 								<Font name="FontFace">
 									<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -3963,7 +3964,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="TextLabel" referent="RBX46A7C30412E84DDEBC5DBEF802EAF267">
+					<Item class="TextLabel" referent="RBX62EC023698FC4FA69A74778C4B7F75D9">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -4057,7 +4058,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextButton" referent="RBXE3ED3E3514514AEFA554B901E48E37B4">
+					<Item class="TextButton" referent="RBX765FA4C1A7304660A27A15945746CAB4">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/SourceSansPro.json</url></Family>
@@ -4157,7 +4158,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="ImageLabel" referent="RBXED4AC878DE224CB2A2FB170F3A601AE3">
+						<Item class="ImageLabel" referent="RBXFD7BBB3F637C4BF1B69C35420E140FF0">
 							<Properties>
 								<Content name="Image"><url>rbxassetid://90285909539025</url></Content>
 								<Color3 name="ImageColor3">
@@ -4175,7 +4176,7 @@ end)]]></ProtectedString>
 								</Vector2>
 								<float name="ImageTransparency">0</float>
 								<token name="ResampleMode">0</token>
-								<token name="ScaleType">0</token>
+								<token name="ScaleType">3</token>
 								<Rect2D name="SliceCenter">
 									<min>
 										<X>0</X>
@@ -4254,7 +4255,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="TextLabel" referent="RBXC95CBEACB9124D419D461401FE097AFA">
+						<Item class="TextLabel" referent="RBX522AA180206F4CE4BF60BA3FD4799AA6">
 							<Properties>
 								<Font name="FontFace">
 									<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -4349,7 +4350,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="TextBox" referent="RBX12DA559047F843918CB62B9B5E6B72E0">
+					<Item class="TextBox" referent="RBX87D5A35E250541408097B4C614B59086">
 						<Properties>
 							<bool name="ClearTextOnFocus">false</bool>
 							<Font name="FontFace">
@@ -4453,7 +4454,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextLabel" referent="RBX087F30454DA246A0B26A8580F3CBE444">
+					<Item class="TextLabel" referent="RBXC077EC7836F74B2498BA8748372BA1A1">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -4547,7 +4548,7 @@ end)]]></ProtectedString>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="TextButton" referent="RBXCE82B25F745B43618704D205CD7DB3D0">
+					<Item class="TextButton" referent="RBX124CB106245440E1A369AD5970A3745D">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -4646,7 +4647,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIPadding" referent="RBX9B906F9B50BB4454A8FF6EE2EF5D1CA0">
+						<Item class="UIPadding" referent="RBXEA3B4E162F2C464C8B9BF0DAC034091E">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -4673,7 +4674,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="TextButton" referent="RBXA131FB381BC84CEC8E33669D8B63FD30">
+					<Item class="TextButton" referent="RBX32323CB0FB9E49499D159766E2A78520">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -4772,7 +4773,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIPadding" referent="RBXD9788D883BC54AD2AADF2D5ECC1F5EF9">
+						<Item class="UIPadding" referent="RBX2390C8514A2D4B658114D8114DF0B3B7">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -4800,7 +4801,7 @@ end)]]></ProtectedString>
 						</Item>
 					</Item>
 				</Item>
-				<Item class="UIAspectRatioConstraint" referent="RBX34D4ED4AC0C14FA49109FA107820E49D">
+				<Item class="UIAspectRatioConstraint" referent="RBX9981CE5689894EC1B9EE82AB8C34A124">
 					<Properties>
 						<float name="AspectRatio">1.70983982</float>
 						<token name="AspectType">0</token>
@@ -4813,7 +4814,7 @@ end)]]></ProtectedString>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="Frame" referent="RBX44954B9D63194EA0ADE8EF7C36DBDDCA">
+				<Item class="Frame" referent="RBX019F4D20D29C4403B2A4D1C9DA9A2D5D">
 					<Properties>
 						<token name="Style">0</token>
 						<bool name="Active">false</bool>
@@ -4876,7 +4877,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="TextButton" referent="RBX5974CD67F1DE409DBDA122DFAB7340BB">
+					<Item class="TextButton" referent="RBXA17331FFDFAC4BCD9CE5F6C2673F0F76">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -4975,7 +4976,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIPadding" referent="RBX157B90040109447EA336D13282306FFE">
+						<Item class="UIPadding" referent="RBX78DE22AF4C084E94879E4850902D2D40">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -5002,7 +5003,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="TextButton" referent="RBXB22E7BC482014460A1BC6EEB16CA2E68">
+					<Item class="TextButton" referent="RBX847F978AE1A24E019B2329AA1081E05A">
 						<Properties>
 							<Font name="FontFace">
 								<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -5101,7 +5102,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIPadding" referent="RBX2729420FBDEE4B08ADB34BD73DD4C1B1">
+						<Item class="UIPadding" referent="RBXFE9B6E6CB7854267B0C4791D9A0B742C">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -5128,7 +5129,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="ScrollingFrame" referent="RBXD50914628ED04157A7B716A1258304CA">
+					<Item class="ScrollingFrame" referent="RBX6F7320EF1BB34A4E91BCEEBBF008BADD">
 						<Properties>
 							<token name="AutomaticCanvasSize">2</token>
 							<Content name="BottomImage"><url>rbxasset://textures/ui/Scroll/scroll-middle.png</url></Content>
@@ -5217,7 +5218,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIListLayout" referent="RBX6B58A9FC3EEF47D7B52565D9E75D3406">
+						<Item class="UIListLayout" referent="RBX0F9F4B82DCEE40C484F88E915F9DC376">
 							<Properties>
 								<token name="HorizontalFlex">0</token>
 								<token name="ItemLineAlignment">0</token>
@@ -5239,7 +5240,7 @@ end)]]></ProtectedString>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
 						</Item>
-						<Item class="ImageButton" referent="RBX62EC273986A44CBE88A54E3C9277CA77">
+						<Item class="ImageButton" referent="RBXCC4A9A621D014EF3AD0B0467E3D782C1">
 							<Properties>
 								<Content name="HoverImage"><null></null></Content>
 								<Content name="Image"><null></null></Content>
@@ -5343,7 +5344,7 @@ end)]]></ProtectedString>
 								<int64 name="SourceAssetId">-1</int64>
 								<BinaryString name="Tags"></BinaryString>
 							</Properties>
-							<Item class="TextLabel" referent="RBX68E78EB4275645CAB1AB0D9A98054A63">
+							<Item class="TextLabel" referent="RBX0AFA463C193E4CFDB3C94F0A35CB094E">
 								<Properties>
 									<Font name="FontFace">
 										<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -5436,7 +5437,7 @@ end)]]></ProtectedString>
 									<int64 name="SourceAssetId">-1</int64>
 									<BinaryString name="Tags"></BinaryString>
 								</Properties>
-								<Item class="UIStroke" referent="RBXFD1FE398838D4D57BE32623A4042A227">
+								<Item class="UIStroke" referent="RBX0F449D8CE46E4B7781C8105FF0E2268F">
 									<Properties>
 										<token name="ApplyStrokeMode">0</token>
 										<UDim name="BorderOffset">
@@ -5464,7 +5465,7 @@ end)]]></ProtectedString>
 									</Properties>
 								</Item>
 							</Item>
-							<Item class="TextLabel" referent="RBX92EA3F29B3A54E74BB79B289B8904A7D">
+							<Item class="TextLabel" referent="RBXB666439515A84D35982170BDA2BAD3BD">
 								<Properties>
 									<Font name="FontFace">
 										<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -5557,7 +5558,7 @@ end)]]></ProtectedString>
 									<int64 name="SourceAssetId">-1</int64>
 									<BinaryString name="Tags"></BinaryString>
 								</Properties>
-								<Item class="UIStroke" referent="RBX393E07F2AB2F44D9AF362DE5E3AE5BCA">
+								<Item class="UIStroke" referent="RBX85F3FBA29D36499AA799F30682B46CB3">
 									<Properties>
 										<token name="ApplyStrokeMode">0</token>
 										<UDim name="BorderOffset">
@@ -5585,7 +5586,7 @@ end)]]></ProtectedString>
 									</Properties>
 								</Item>
 							</Item>
-							<Item class="ImageLabel" referent="RBX0835BDBAC6B04E3AB6768984E768C058">
+							<Item class="ImageLabel" referent="RBX491A55779CF748D2A5C14AE75A48D014">
 								<Properties>
 									<Content name="Image"><url>rbxassetid://10925696693</url></Content>
 									<Color3 name="ImageColor3">
@@ -5683,7 +5684,7 @@ end)]]></ProtectedString>
 								</Properties>
 							</Item>
 						</Item>
-						<Item class="UIPadding" referent="RBX402C7EB8E8AC42B2A4CEAD3E3DF028F6">
+						<Item class="UIPadding" referent="RBX8D5C2319DE264EF59F24FDF9997EB7D5">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -5710,7 +5711,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="TextBox" referent="RBX7B1E107245FA4F04A46C77BADEE61E21">
+					<Item class="TextBox" referent="RBXCEEC49FC5D0344B8A2FE0AAAED60C61B">
 						<Properties>
 							<bool name="ClearTextOnFocus">false</bool>
 							<Font name="FontFace">
@@ -5813,7 +5814,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIPadding" referent="RBX0D7143ADEF7F4E09A2220098E1288D12">
+						<Item class="UIPadding" referent="RBX4EF0EB2E45904FE081350A8A0A449CDD">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -5840,7 +5841,7 @@ end)]]></ProtectedString>
 							</Properties>
 						</Item>
 					</Item>
-					<Item class="TextBox" referent="RBXC8F1CFEFD9CD4435920751398D607C99">
+					<Item class="TextBox" referent="RBX24B089CC9FBC4E8D85F228679EFBF34A">
 						<Properties>
 							<bool name="ClearTextOnFocus">false</bool>
 							<Font name="FontFace">
@@ -5943,7 +5944,7 @@ end)]]></ProtectedString>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
-						<Item class="UIPadding" referent="RBX4EEF8321E61E4475B7015FBA0F846150">
+						<Item class="UIPadding" referent="RBXFD3E27A309B14D18B472CE061A1E5F43">
 							<Properties>
 								<UDim name="PaddingBottom">
 									<S>0</S>
@@ -5972,7 +5973,7 @@ end)]]></ProtectedString>
 					</Item>
 				</Item>
 			</Item>
-			<Item class="Frame" referent="RBX6B88D664AC104CCEA46176B86ECF5DF0">
+			<Item class="Frame" referent="RBXED3C0361269643BE9470CF01EDB572AE">
 				<Properties>
 					<token name="Style">0</token>
 					<bool name="Active">true</bool>
@@ -6035,7 +6036,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="TextLabel" referent="RBX6BFFD0FCAF734609A651390494FD626E">
+				<Item class="TextLabel" referent="RBXD017435136D345CDBF15DAD208412C2A">
 					<Properties>
 						<Font name="FontFace">
 							<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -6128,7 +6129,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="UIPadding" referent="RBXCB82FEEC41F647FCB1DC18322329441B">
+					<Item class="UIPadding" referent="RBX406B58BCB17847D98D004A354B0B860C">
 						<Properties>
 							<UDim name="PaddingBottom">
 								<S>0</S>
@@ -6155,7 +6156,7 @@ end)]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="UIAspectRatioConstraint" referent="RBX99E0568244C242A8B5B8BFB01763994E">
+				<Item class="UIAspectRatioConstraint" referent="RBXAD8AE9DC0DF7428A94BBF3A88A6C2BA3">
 					<Properties>
 						<float name="AspectRatio">2.13729978</float>
 						<token name="AspectType">0</token>
@@ -6168,7 +6169,7 @@ end)]]></ProtectedString>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
 				</Item>
-				<Item class="TextLabel" referent="RBXCC8BF43846144AB7AC173FC0FC944440">
+				<Item class="TextLabel" referent="RBX8A74AFD992B04AD28E8BEEE0DE917A4A">
 					<Properties>
 						<Font name="FontFace">
 							<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -6261,7 +6262,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="UITextSizeConstraint" referent="RBXAE56D158A5774529BB18F21D9029F58A">
+					<Item class="UITextSizeConstraint" referent="RBXECAA2647A4D34148B18DE0C8EDC38B81">
 						<Properties>
 							<int name="MaxTextSize">24</int>
 							<int name="MinTextSize">1</int>
@@ -6274,7 +6275,7 @@ end)]]></ProtectedString>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="ImageLabel" referent="RBXF58BEDB6B44F4FFF9E8F0F8988F43F49">
+				<Item class="ImageLabel" referent="RBXB09EF8B101354CD2B38BF06C6D06302D">
 					<Properties>
 						<Content name="Image"><url>rbxassetid://18102805523</url></Content>
 						<Color3 name="ImageColor3">
@@ -6370,7 +6371,7 @@ end)]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="UIAspectRatioConstraint" referent="RBXB5686A7F0D3247AFAFF59324AE3A629C">
+					<Item class="UIAspectRatioConstraint" referent="RBX47E93004AB724B17A2014F378224276F">
 						<Properties>
 							<float name="AspectRatio">1</float>
 							<token name="AspectType">0</token>
@@ -6386,7 +6387,7 @@ end)]]></ProtectedString>
 				</Item>
 			</Item>
 		</Item>
-		<Item class="Frame" referent="RBX3C6D166C943A41AD926272EEE8D57FFA">
+		<Item class="Frame" referent="RBXBE45729DACD547FC9046C76E7629A7DE">
 			<Properties>
 				<token name="Style">0</token>
 				<bool name="Active">true</bool>
@@ -6449,7 +6450,7 @@ end)]]></ProtectedString>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="TextLabel" referent="RBX2DC828EE8E00475DB795A0B5CD2E50B9">
+			<Item class="TextLabel" referent="RBX0279AF10A75A413EAFDFF6A48DCE772A">
 				<Properties>
 					<Font name="FontFace">
 						<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -6542,7 +6543,7 @@ end)]]></ProtectedString>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UIPadding" referent="RBXD2EFD934F9184259A39AEB85878EE362">
+				<Item class="UIPadding" referent="RBX677050FC9FE44526A892A3E75EB0BA4A">
 					<Properties>
 						<UDim name="PaddingBottom">
 							<S>0</S>
@@ -6569,7 +6570,7 @@ end)]]></ProtectedString>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="TextLabel" referent="RBX0A85F4078A704C148235054346157EC6">
+			<Item class="TextLabel" referent="RBXA7ABD7D72E4E495BB0C0301C98D78DB3">
 				<Properties>
 					<Font name="FontFace">
 						<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -6664,7 +6665,7 @@ Please enter your API Key to continue:]]></string>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="TextBox" referent="RBXB200649C039444DEB165F10A6CE70354">
+			<Item class="TextBox" referent="RBX25FD4D840091482DB711E76BA597EAFC">
 				<Properties>
 					<bool name="ClearTextOnFocus">false</bool>
 					<Font name="FontFace">
@@ -6767,7 +6768,7 @@ Please enter your API Key to continue:]]></string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UIPadding" referent="RBX1A3CA0D5BDFA49548B4D52F0FDC432D7">
+				<Item class="UIPadding" referent="RBXB604AB5C67A44B319B3F4EAD2904448D">
 					<Properties>
 						<UDim name="PaddingBottom">
 							<S>0</S>
@@ -6794,7 +6795,7 @@ Please enter your API Key to continue:]]></string>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="ImageButton" referent="RBX6D0DA0A6D093405E932619E5CDF1434E">
+			<Item class="ImageButton" referent="RBX5CAFB5C75D8B4514B26EE657FBFD361C">
 				<Properties>
 					<Content name="HoverImage"><null></null></Content>
 					<Content name="Image"><url>rbxassetid://6353957304</url></Content>
@@ -6899,7 +6900,7 @@ Please enter your API Key to continue:]]></string>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="TextLabel" referent="RBX7EBAAF72E13647E3A6A6F1E015F8ECAC">
+			<Item class="TextLabel" referent="RBXD39E1A78D7E04457912B18A3FF7CDCFF">
 				<Properties>
 					<Font name="FontFace">
 						<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -6993,7 +6994,7 @@ Please enter your API Key to continue:]]></string>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="UIAspectRatioConstraint" referent="RBX22B2F918786B484884AAE2274A540602">
+			<Item class="UIAspectRatioConstraint" referent="RBX2760B73726AB4CEE8785A87AD9DC0A3D">
 				<Properties>
 					<float name="AspectRatio">2.13729978</float>
 					<token name="AspectType">0</token>
@@ -7006,7 +7007,7 @@ Please enter your API Key to continue:]]></string>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="TextButton" referent="RBX37A45EDF2D1343F484A90A361FA5498F">
+			<Item class="TextButton" referent="RBX40CFE369EAFF46A992DE2FF4E15E9170">
 				<Properties>
 					<Font name="FontFace">
 						<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -7105,7 +7106,7 @@ Please enter your API Key to continue:]]></string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UIPadding" referent="RBX2A47F994644F4F25A3DBD7BC877A8AE4">
+				<Item class="UIPadding" referent="RBX817102BCC5174F2CB0157E8989F591E8">
 					<Properties>
 						<UDim name="PaddingBottom">
 							<S>0</S>
@@ -7132,7 +7133,7 @@ Please enter your API Key to continue:]]></string>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="Frame" referent="RBX1ED95351ACFA436A887323C272FE612B">
+			<Item class="Frame" referent="RBX78CDA9ADC3B14A65B9B5C9B6139DE432">
 				<Properties>
 					<token name="Style">0</token>
 					<bool name="Active">false</bool>
@@ -7195,7 +7196,7 @@ Please enter your API Key to continue:]]></string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="ImageLabel" referent="RBX9CE402BB2BAA4ED2A068E9C2A00DDE64">
+				<Item class="ImageLabel" referent="RBXC94E68523AAA4DF798CA18F8AA321986">
 					<Properties>
 						<Content name="Image"><url>rbxassetid://13404639846</url></Content>
 						<Color3 name="ImageColor3">
@@ -7291,7 +7292,7 @@ Please enter your API Key to continue:]]></string>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags"></BinaryString>
 					</Properties>
-					<Item class="UIAspectRatioConstraint" referent="RBXC990882776CD4CF4B702E070514D8368">
+					<Item class="UIAspectRatioConstraint" referent="RBX162C97021976419E8F756CFC4CA7350B">
 						<Properties>
 							<float name="AspectRatio">1</float>
 							<token name="AspectType">0</token>
@@ -7304,7 +7305,7 @@ Please enter your API Key to continue:]]></string>
 							<BinaryString name="Tags"></BinaryString>
 						</Properties>
 					</Item>
-					<Item class="UICorner" referent="RBX0F671BAD4C9E4BEEA566D84EDAD90334">
+					<Item class="UICorner" referent="RBX41B3AFC1529543D88EF944B309F945FE">
 						<Properties>
 							<UDim name="CornerRadius">
 								<S>1</S>
@@ -7319,7 +7320,7 @@ Please enter your API Key to continue:]]></string>
 						</Properties>
 					</Item>
 				</Item>
-				<Item class="TextLabel" referent="RBX3743F4E66A634A1CA16A421128AAA917">
+				<Item class="TextLabel" referent="RBXCAF4D6F84ED944D884EB63CDCF958280">
 					<Properties>
 						<Font name="FontFace">
 							<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -7415,7 +7416,7 @@ Please enter your API Key to continue:]]></string>
 				</Item>
 			</Item>
 		</Item>
-		<Item class="Frame" referent="RBX5DF3320B24A34AA784824B832F3399F4">
+		<Item class="Frame" referent="RBXA39D47FD47A1470A8CA0AE207334C05C">
 			<Properties>
 				<token name="Style">0</token>
 				<bool name="Active">true</bool>
@@ -7478,7 +7479,7 @@ Please enter your API Key to continue:]]></string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
-			<Item class="TextLabel" referent="RBX3651DE856A2841A7A5D5864B599FFF34">
+			<Item class="TextLabel" referent="RBXAD294EC2EAB34618AD50DE75292BFB4F">
 				<Properties>
 					<Font name="FontFace">
 						<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -7571,7 +7572,7 @@ Please enter your API Key to continue:]]></string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UIPadding" referent="RBXEF32B5F4B48D48089309A18982D47583">
+				<Item class="UIPadding" referent="RBX4FBC66AE765443A985F24BBF24FC5216">
 					<Properties>
 						<UDim name="PaddingBottom">
 							<S>0</S>
@@ -7598,7 +7599,7 @@ Please enter your API Key to continue:]]></string>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="UIAspectRatioConstraint" referent="RBXDE815300636C4520A0D33F3B671B2340">
+			<Item class="UIAspectRatioConstraint" referent="RBX631B44D4147344979F26AE42F62F1A08">
 				<Properties>
 					<float name="AspectRatio">2.13729978</float>
 					<token name="AspectType">0</token>
@@ -7611,7 +7612,7 @@ Please enter your API Key to continue:]]></string>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
-			<Item class="TextButton" referent="RBXD253DE8296284B05A3E095388392D155">
+			<Item class="TextButton" referent="RBX571090547C57453CB79B1B534DC0C5D6">
 				<Properties>
 					<Font name="FontFace">
 						<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -7710,7 +7711,7 @@ Please enter your API Key to continue:]]></string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UIPadding" referent="RBXC94DDC4188044422A943D613DC21900D">
+				<Item class="UIPadding" referent="RBX8482D1C5FB2A43EAB89C2F53F7828B71">
 					<Properties>
 						<UDim name="PaddingBottom">
 							<S>0</S>
@@ -7737,7 +7738,7 @@ Please enter your API Key to continue:]]></string>
 					</Properties>
 				</Item>
 			</Item>
-			<Item class="TextLabel" referent="RBX81BF1743BA754F988F29531852DAC4D1">
+			<Item class="TextLabel" referent="RBXEB7A2840129F4817925C61BAE903E8FA">
 				<Properties>
 					<Font name="FontFace">
 						<Family><url>rbxasset://fonts/families/RobotoMono.json</url></Family>
@@ -7830,7 +7831,7 @@ Please enter your API Key to continue:]]></string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
-				<Item class="UITextSizeConstraint" referent="RBXA689A770EAF34E6BA628D106202729F2">
+				<Item class="UITextSizeConstraint" referent="RBXE9EEC1BD46A94255A5C659E7BC5F8D96">
 					<Properties>
 						<int name="MaxTextSize">24</int>
 						<int name="MinTextSize">1</int>

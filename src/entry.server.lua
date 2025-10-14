@@ -11,7 +11,7 @@ local PLUGIN_IS_VALID = true
 local API_KEY = nil
 
 local VERSION = "v2"
-local BUILD = 20251011 --YYMMDD
+local BUILD = 20251014 --YYMMDD
 
 local gui = script.Parent.OcelotGuiRev2
 
@@ -20,6 +20,8 @@ local DropdownHandler = require(script.Parent.utils.dropdownHandler)
 local PopupTool = require(script.Parent.utils.popupTool)
 local NetHttp = require(script.Parent.utils.netHttp)
 local FlipbookAnimator = require(script.Parent.utils.flipbookAnimator)
+local IDE = require(script.Parent.ide)
+IDE.init(plugin)
 
 local Players = game:GetService("Players")
 
@@ -520,12 +522,21 @@ local function load_explorer_content()
                 ChangeHistoryService:SetWaypoint("TSDEVTOOL_IMPORT_JSM_"..asset.id)
             elseif content_type == "package/mod" then
                 -- no need to check for asset.compressed since it has been deprecated by the time this comes out
+                local root = IDE.get_project_storage()
                 local decompressed = deflate.Zlib.Decompress(data)
                 local stringval = Instance.new("StringValue")
-                stringval.Name = `[{asset.id}] {asset.name}`
+                local name = `[{asset.id}] {asset.name}`
+                if root:FindFirstChild(name) then
+                    local i = 1
+                    while root:FindFirstChild(name) do
+                        name = `[{asset.id}] {asset.name} ({i})`
+                        i += 1
+                    end
+                end
+                stringval.Name = name
                 stringval.Value = decompressed
                 stringval:AddTag("tsmodfs")
-                stringval.Parent = workspace
+                stringval.Parent = root
                 ChangeHistoryService:SetWaypoint("TSDEVTOOL_IMPORT_MOD_"..asset.id)
             elseif content_type == "asset/animation" then
                 if not jsonAnim.has_version(asset.resource_version) then
@@ -635,6 +646,36 @@ gui.Buttons.Logout.MouseButton1Click:Connect(function()
     gui.Buttons.Size = UDim2.fromOffset(0, 64)
     gui.MainContainer.Visible = false
     update_version_text()
+end)
+
+--#endregion
+
+--#region IDE
+
+local IDE_ENABLED = false
+IDE.set_ide_state(false)
+task.spawn(function()
+    -- hacky fix bc for some reason the first open doesnt actually show the ui
+    task.wait()
+    IDE.set_ide_state(true)
+    task.wait()
+    IDE.set_ide_state(false)
+end)
+gui.Buttons.Studio.MouseButton1Click:Connect(function()
+    IDE_ENABLED = not IDE_ENABLED
+    IDE.set_ide_state(IDE_ENABLED)
+    if IDE_ENABLED then
+		gui.Buttons.Studio.BackgroundColor3 = Color3.new(1,1,1)
+		gui.Buttons.Studio.ImageColor3 = Color3.fromRGB(32,32,32)
+    else
+		gui.Buttons.Studio.BackgroundColor3 = Color3.fromRGB(32,32,32)
+		gui.Buttons.Studio.ImageColor3 = Color3.new(1,1,1)
+    end
+end)
+IDE.closing:Connect(function()
+    gui.Buttons.Studio.BackgroundColor3 = Color3.fromRGB(32,32,32)
+    gui.Buttons.Studio.ImageColor3 = Color3.new(1,1,1)
+    IDE_ENABLED = false
 end)
 
 --#endregion
