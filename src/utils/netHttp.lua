@@ -1,5 +1,5 @@
 local mod = {
-    Endpoint = "http://localhost",
+    Endpoint = "https://ocelot.bittwr.com",
     UserId = 0,
 }
 local HttpService = game:GetService("HttpService")

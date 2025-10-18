@@ -11,7 +11,7 @@ local PLUGIN_IS_VALID = true
 local API_KEY = nil
 
 local VERSION = "v2"
-local BUILD = 20251014 --YYMMDD
+local BUILD = 20251018 --YYMMDD
 
 local gui = script.Parent.OcelotGuiRev2
 
